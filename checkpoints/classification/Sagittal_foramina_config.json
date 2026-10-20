@@ -1,0 +1,25 @@
+{
+    "model_path": "checkpoints/classification/Sagittal_foramina.pth",
+
+    "num_classes": 3,
+
+    "class_names": [
+        "Normal",
+        "Stenosis",
+        "Severe_Stenosis"
+    ],
+
+    "img_size": 128,
+
+    "dropout_p": 0.2005582403397543,
+
+    "attention_mechanism": "cbam",
+
+    "attention_stage": "before_classification",
+
+    "cam_reduction": 16,
+
+    "ugr_hidden_dim": 256,
+
+    "ugr_dropout": 0.20
+}

@@ -1,0 +1,33 @@
+{
+    "yolo_ckpt_path": "checkpoints/roi_detection/Axial_yolo/weights/best.pt",
+
+    "dino_ckpt_path": "checkpoints/roi_detection/Axial_DINO/checkpoints/checkpoint_best.pth",
+
+    "dino_repo_path": "tools/roi/DINO",
+
+    "dino_config_path": "config/DINO/DINO_4scale_swin.py",
+
+    "num_classes": 5,
+
+    "device": "auto",
+
+    "score_threshold": 0.40,
+
+    "ensemble_iou_threshold": 0.4,
+
+    "class_names": {
+        "0": "LFS",
+        "1": "LLS",
+        "2": "SCS",
+        "3": "RLS",
+        "4": "RFS"
+    },
+
+    "color_map": {
+        "0": [255, 87, 51],
+        "1": [51, 255, 87],
+        "2": [51, 87, 255],
+        "3": [243, 255, 51],
+        "4": [255, 51, 243]
+    }
+}

@@ -1,0 +1,15 @@
+{
+    "model_path": "checkpoints/classification/Axial_lateral.pth",
+    "num_classes": 3,
+    "class_names": [
+        "Normal",
+        "Stenosis",
+        "Severe_Stenosis"
+    ],
+    "img_size": 128,
+    "dropout_p": 0.11861636420602348,
+    "attention_mechanism": "se",
+    "attention_stage": "stage_1_2",
+    "ugr_hidden_dim": 256,
+    "ugr_dropout": 0.20
+}

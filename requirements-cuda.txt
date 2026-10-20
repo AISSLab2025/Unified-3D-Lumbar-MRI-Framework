@@ -1,0 +1,2 @@
+# Install after PyTorch and requirements.txt, with --no-build-isolation.
+mamba_ssm==2.3.0

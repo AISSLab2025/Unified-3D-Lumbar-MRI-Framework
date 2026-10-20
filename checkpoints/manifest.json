@@ -1,0 +1,15 @@
+{
+  "note": "Weights are distributed separately; preserve these case-sensitive paths.",
+  "files": [
+    "checkpoints/classification/Axial_central.pth",
+    "checkpoints/classification/Axial_foramina.pth",
+    "checkpoints/classification/Axial_lateral.pth",
+    "checkpoints/classification/Sagittal_foramina.pth",
+    "checkpoints/roi_detection/Axial_DINO/checkpoints/checkpoint_best.pth",
+    "checkpoints/roi_detection/Axial_yolo/weights/best.pt",
+    "checkpoints/roi_detection/Sagittal_yolo/weights/best.pt",
+    "checkpoints/roi_detection/sagittal_Dino/checkpoints/checkpoint_best.pth",
+    "checkpoints/segmentation/Axial_AGMH/best.pt",
+    "checkpoints/segmentation/Sagital_AGMH/best.pt"
+  ]
+}
