@@ -223,30 +223,42 @@ in use. The current API has no authentication; share it only with intended
 research users and submit studies sequentially.
 
 
+
 ## Citation
 
-If you use this code, framework, or associated datasets in your research, **please cite the following publications**:
+If you use this framework, the associated code, or datasets in your research, please cite the following works:
 
-### 1. Sagittal Lumbar MRI Dataset
+```bibtex
+@article{Abdulmahmod2026SagittalMRI,
+  title   = {Medical Spine Sagittal MRI Dataset for Segmentation and Foraminal Stenosis Detection},
+  author  = {Abdulmahmod, Osamah F. and Al-antari, Mugahed A. and Kwon, Hyunwook and others},
+  journal = {Scientific Data},
+  volume  = {13},
+  pages   = {809},
+  year    = {2026},
+  doi     = {10.1038/s41597-026-07138-x}
+}
 
-Abdulmahmod, O. F., Al-antari, M. A., Kwon, H., *et al.* (2026). Medical Spine Sagittal MRI Dataset for Segmentation and Foraminal Stenosis Detection. *Scientific Data*, **13**, 809.
+@dataset{Kwon2026AxialMRI,
+  title     = {Medical Lumbar Spine 3D Axial MRI Dataset for Stenosis Detection, Severity Classification, and Anatomical Segmentation},
+  author    = {Kwon, Hyunwook and Abdulmahmod, Osamah F. and Habib, Afnan and Raza, Mukhlis and Bütün, Ertan and Talo, Muhammed and Kaplan, Metin and Ertuğrul, Bilal and Al-antari, Mugahed A.},
+  publisher = {Mendeley Data},
+  version   = {V1},
+  year      = {2026},
+  doi       = {10.17632/wjxkrkxhb8.1}
+}
 
-**DOI:** https://doi.org/10.1038/s41597-026-07138-x
+@inproceedings{Abdulmahmod2025LumbarStenosis,
+  title     = {A Novel Lumbar Foraminal Stenosis Detection and Classification Framework Using 3D Sagittal MRI Dataset},
+  author    = {Abdulmahmod, Osamah F. and Habib, Afnan and Raza, Mukhlis and Gu, Yeong Hyeon and Talo, Muhammed and Al-antari, Mugahed A.},
+  booktitle = {2025 9th International Artificial Intelligence and Data Processing Symposium (IDAP)},
+  pages     = {1--7},
+  year      = {2025},
+  publisher = {IEEE},
+  doi       = {10.1109/IDAP68205.2025.11222352}
+}
+```
 
-### 2. 3D Axial Lumbar MRI Dataset
-
-Kwon, H., Abdulmahmod, O. F., Habib, A., Raza, M., Bütün, E., Talo, M., Kaplan, M., Ertuğrul, B., & Al-antari, M. A. (2026). Medical Lumbar Spine 3D Axial MRI Dataset for Stenosis Detection, Severity Classification, and Anatomical Segmentation. *Mendeley Data*, V1.
-
-**DOI:** https://doi.org/10.17632/wjxkrkxhb8.1
-
-### 3. Lumbar Foraminal Stenosis Detection and Classification
-
-Abdulmahmod, O. F., Habib, A., Raza, M., Gu, Y. H., Talo, M., & Al-antari, M. A. (2025). A Novel Lumbar Foraminal Stenosis Detection and Classification Framework Using 3D Sagittal MRI Dataset. *2025 9th International Artificial Intelligence and Data Processing Symposium (IDAP)*, pp. 1–7.
-
-**DOI:** https://doi.org/10.1109/IDAP68205.2025.11222352
-
----
-
-**Acknowledgment:** If you use, modify, or build upon this repository for academic or research purposes, please acknowledge the original work by citing the relevant publications listed above.
+We appreciate your acknowledgment of our work. Please cite the relevant publications if you use, modify, or build upon this repository.
 
 
