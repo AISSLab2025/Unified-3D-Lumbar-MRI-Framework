@@ -221,3 +221,32 @@ Users can also open `https://YOUR-TUNNEL.ngrok.app/docs` and upload a ZIP throug
 the API interface. Keep the API server and ngrok running while the endpoint is
 in use. The current API has no authentication; share it only with intended
 research users and submit studies sequentially.
+
+
+## Citation
+
+If you use this code, framework, or associated datasets in your research, **please cite the following publications**:
+
+### 1. Sagittal Lumbar MRI Dataset
+
+Abdulmahmod, O. F., Al-antari, M. A., Kwon, H., *et al.* (2026). Medical Spine Sagittal MRI Dataset for Segmentation and Foraminal Stenosis Detection. *Scientific Data*, **13**, 809.
+
+**DOI:** https://doi.org/10.1038/s41597-026-07138-x
+
+### 2. 3D Axial Lumbar MRI Dataset
+
+Kwon, H., Abdulmahmod, O. F., Habib, A., Raza, M., Bütün, E., Talo, M., Kaplan, M., Ertuğrul, B., & Al-antari, M. A. (2026). Medical Lumbar Spine 3D Axial MRI Dataset for Stenosis Detection, Severity Classification, and Anatomical Segmentation. *Mendeley Data*, V1.
+
+**DOI:** https://doi.org/10.17632/wjxkrkxhb8.1
+
+### 3. Lumbar Foraminal Stenosis Detection and Classification
+
+Abdulmahmod, O. F., Habib, A., Raza, M., Gu, Y. H., Talo, M., & Al-antari, M. A. (2025). A Novel Lumbar Foraminal Stenosis Detection and Classification Framework Using 3D Sagittal MRI Dataset. *2025 9th International Artificial Intelligence and Data Processing Symposium (IDAP)*, pp. 1–7.
+
+**DOI:** https://doi.org/10.1109/IDAP68205.2025.11222352
+
+---
+
+**Acknowledgment:** If you use, modify, or build upon this repository for academic or research purposes, please acknowledge the original work by citing the relevant publications listed above.
+
+
