@@ -56,7 +56,7 @@ def show_image(image, title="test"):
         # image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB) 
         # print(image.shape)
         plt.imshow(image)
-    plt.title(title)
+    # Sagittal images are displayed without an embedded top heading.
     plt.axis('off')
     plt.show()
 

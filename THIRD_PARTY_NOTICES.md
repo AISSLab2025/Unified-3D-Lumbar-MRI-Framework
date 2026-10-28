@@ -1,5 +1,12 @@
 # Third-party components
 
+`SwarmSpine_Inference/` incorporates the SpineSwarm chatbot runtime, adapted
+for this inference API. Its original MIT notice is retained in
+`SwarmSpine_Inference/LICENSE` (Copyright 2026 SpineSwarm Authors).
+The license of this component does not select a license for the entire repository.
+Ollama and LLM weights are installed separately and are not redistributed here;
+their respective licenses apply to local use.
+
 `tools/roi/DINO/` contains DINO and Deformable DETR derived code. Retain the
 copyright and license headers in those files. Upstream projects:
 

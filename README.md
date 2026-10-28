@@ -4,6 +4,21 @@ This framework analyzes lumbar spine MRI studies containing sagittal and axial
 DICOM series. It combines ROI detection, stenosis classification, anatomical
 segmentation, and measurements, and provides the results through a FastAPI API.
 
+The optional [SwarmSpine chatbot](#9-run-the-chatbot-locally) provides a
+browser interface for uploading studies, reviewing images and measurements,
+and asking questions. Imaging inference and the chatbot use separate Python
+environments. A local Ollama service supplies the language model.
+
+| Local component | Port | Environment |
+| --- | --- | --- |
+| Imaging API | 8000 | `lss-framework` (or your existing `LSS`) |
+| Chatbot | 8001 | `SwarmSpine_Inference/.venv` |
+| Ollama | 11434 | Separate local service |
+
+Open the chatbot at `http://127.0.0.1:8001`. All three services can run on the
+same PC in WSL; ngrok is optional and is not needed for local use. Neither
+imaging model weights nor LLM weights are included in this repository.
+
 ## How the code works
 
 `api.py` accepts a study ZIP through `POST /predict` and passes it to
@@ -31,6 +46,8 @@ segmentation, and measurements, and provides the results through a FastAPI API.
 | `checkpoints/` | Model configuration files and the required-weight manifest. |
 | `examples/predict.py` | Sends a study ZIP to a running API and saves its response. |
 | `stage_timing.py` | Records processing times for pipeline stages. |
+| `SwarmSpine_Inference/` | Chatbot, image routing, configuration template, and offline checks. |
+| `local_models/` | Optional local LLM storage; entirely excluded from Git. |
 
 ## 1. Install the environment
 
@@ -93,7 +110,8 @@ Folder names containing `axial` and `sagittal` guide slice routing. Otherwise,
 the code uses DICOM orientation metadata where available. Keep the DICOM
 orientation, position, and pixel spacing information needed for measurements.
 
-For the anonymized example study, use this repository location:
+If you have the example study separately, place it at this repository location
+(DICOM data and ZIP archives are excluded from Git):
 
 ```text
 examples/data/0004.zip
@@ -221,3 +239,199 @@ Users can also open `https://YOUR-TUNNEL.ngrok.app/docs` and upload a ZIP throug
 the API interface. Keep the API server and ngrok running while the endpoint is
 in use. The current API has no authentication; share it only with intended
 research users and submit studies sequentially.
+
+## 9. Run the chatbot locally
+
+Complete sections 1–4 first to install the imaging environment, place the
+trained checkpoints, and start the API. Then follow the steps below to set up
+the chatbot and its local language model. All commands are for Linux/WSL.
+
+### Services
+
+| Service | Default address | Purpose |
+| --- | --- | --- |
+| Imaging API | http://127.0.0.1:8000 | DICOM processing and output images |
+| Chatbot | http://127.0.0.1:8001 | Browser interface and study questions |
+| Ollama | http://127.0.0.1:11434 | Local language model |
+
+Use the same Linux/WSL distribution for these services. Ngrok is unnecessary
+for local use. Python packages do not install the Ollama service or its model.
+
+### First-time chatbot setup
+
+From the repository root:
+
+```bash
+cd SwarmSpine_Inference
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+cp -n .env.example .env
+```
+
+Keep these local defaults in `.env`:
+
+```env
+SPINESWARM_API_URL=http://127.0.0.1:8000/predict
+SPINESWARM_PORT=8001
+OLLAMA_API_BASE=http://127.0.0.1:11434
+SPINESWARM_MODEL=gemma3:12b
+```
+
+Configuration loads from this folder's `.env`; existing process environment
+variables take precedence. Put comments on separate lines. Do not commit `.env`.
+Optional OpenAI support uses your own `OPENAI_API_KEY` and a supported model;
+it sends the study context to that provider instead of running entirely locally.
+
+### Install and prepare the local LLM
+
+Install Ollama in Linux/WSL using its [installation guide](https://docs.ollama.com/linux).
+For example:
+
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+sudo systemctl start ollama
+ollama pull gemma3:12b
+curl http://127.0.0.1:11434/api/tags
+```
+
+If systemd is unavailable, run `ollama serve` in a separate terminal and leave
+it open before pulling the model. Do not start a second server on an occupied
+port. The tags response should list `gemma3:12b`; it confirms availability,
+not successful generation or sufficient memory. Model and imaging workloads
+share machine resources. The model selector can use another installed model.
+
+Weights remain in Ollama's local storage, outside Git. To use this repository's
+ignored `local_models/ollama/` directory instead, follow
+[local model storage instructions](#10-optional-local-model-storage).
+No model download, installation, or service startup is performed automatically
+by this repository.
+
+### Start the project
+
+Terminal 1, from the repository root, after placing the imaging weights:
+
+```bash
+conda activate lss-framework
+python -m uvicorn api:app --host 127.0.0.1 --port 8000 --workers 1
+```
+
+Terminal 2, from the repository root:
+
+```bash
+cd SwarmSpine_Inference
+source .venv/bin/activate
+python check_connection.py
+python -m spine_swarm.web_app
+```
+
+Keep Ollama running too. Open [the chatbot](http://127.0.0.1:8001).
+If using the author's already configured backend environment, activate `LSS`
+instead of `lss-framework`; do not reinstall a working imaging environment.
+
+Upload a DICOM ZIP to run imaging inference and the clinical panel. Upload a
+saved API `results.json` to skip imaging inference; loading it still runs the
+panel. The image files referenced by that JSON must remain available through
+the configured API. Generic questions and reports invoke the language model;
+typed image lookups read the loaded findings without an LLM call.
+
+### Image behavior
+
+| Request | Image source |
+| --- | --- |
+| Sagittal classification | Sagittal classification Grad-CAM image |
+| Axial classification | `output/classification/axial_combined/` only |
+| Axial detection | `output/ROIs_detection/axial/axial_estimation_debug/` only |
+| Sagittal detection | Sagittal ROI detection overlay |
+| Measurement | Matching measurement image and stored values |
+| Segmentation | Segmentation overlay, not the original image |
+
+Typed responses show at most one image and do not replace missing images with
+another category. Axial combined images show multiple regions at a given level.
+Highest-grade sagittal requests select one available image among tied records
+in record order and disclose ties. Captions use clinical wording rather than
+internal field names. Sagittal classification images have level labels; new
+sagittal measurement images omit embedded top headings.
+
+The backend now emits the actual axial combined file in `gradcam_path` and
+`gradcam_image` (`path` and `url`). The adapter also handles older responses
+with a valid entry-level combined image URL. Detection URLs remain in the API
+JSON but are selected only for detection requests.
+
+### Example questions
+
+- Show one sagittal image of the worst foraminal stenosis and state its level, side, and severity.
+- Show the axial foraminal classification at L1-L2.
+- Show the axial detection image at L4-L5.
+- Show the lumbar lordosis measurement and its image.
+- Show the spondylolisthesis measurements and corresponding image.
+- Show the vertebral deformity measurements.
+- Show the axial segmentation at L4-L5.
+
+### Troubleshooting
+
+| Symptom | What to check |
+| --- | --- |
+| LLM connection refused | Ollama is running; `OLLAMA_API_BASE` is reachable from the chatbot environment |
+| Model not found | `ollama list` includes the exact selected model tag |
+| API connection failure | Backend is running; `.env` points to its `/predict` endpoint |
+| Image unavailable | Matching study outputs still exist; URL host matches `SPINESWARM_API_URL` |
+| Address already in use | Stop the old process before restarting that service |
+| Old labels or image titles | Restart backend and regenerate images; code changes do not edit saved PNGs |
+
+An old ngrok URL in saved JSON is not automatically rewritten to localhost.
+Use results from the local API. Windows-hosted Ollama may require a different
+reachable host address from WSL. Changes require restarting the affected service.
+
+One active study is held in memory. A new upload clears the previous context;
+restarting clears it too. The imaging API replaces `input/` and `output/` on
+each upload. Use one study/user at a time and preserve needed outputs separately.
+
+### Checks you can run
+
+```bash
+python -B check_integration.py
+python check_connection.py
+```
+
+The first command uses offline fixtures/mocks. The second makes a read-only
+GET request for the API contract; it does not run inference or call an LLM.
+The chatbot's `/health` endpoint only checks that its web server responds.
+These checks do not validate clinical accuracy or model performance.
+Dependency ranges are not a tested lockfile.
+
+The existing backend stage timings cover imaging processing, not chatbot or
+LLM response time. No evaluation datasets, scores, saved reports, credentials,
+Python environments, or trained weights are included in this chatbot folder.
+
+## 10. Optional local model storage
+
+The entire `local_models/` directory is excluded from Git. Create it only if
+you want a custom local LLM storage location. Imaging weights must remain at
+the exact paths in `checkpoints/manifest.json`; do not move them here.
+
+For Ollama, the simplest option is to keep its existing default model storage.
+There is no need to redownload a model that the running server already lists.
+
+If you specifically want local LLM weights under this project, use a manually
+started Ollama server. From the repository root in Linux/WSL:
+
+```bash
+mkdir -p local_models/ollama
+export OLLAMA_MODELS="$(pwd)/local_models/ollama"
+ollama serve
+```
+
+First stop any existing Ollama server on port 11434 (for a systemd service,
+`sudo systemctl stop ollama`). Leave the manual-server terminal open. In another
+terminal, download to that server's configured storage:
+
+```bash
+ollama pull gemma3:12b
+ollama list
+```
+
+Set `OLLAMA_MODELS` each time you manually start that server. Setting it in the
+chatbot `.env` does not configure a separate Ollama process or system service.
+Changing model storage does not move existing downloaded models automatically.
+These are instructions only; no weights or model server are included here.

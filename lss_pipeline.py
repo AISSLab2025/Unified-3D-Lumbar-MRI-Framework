@@ -180,7 +180,6 @@ def _write_results_json(results: dict[str, Any], run_output: Path, base_url: str
     run_output.mkdir(parents=True, exist_ok=True)
     json_path = run_output / "results.json"
     clean_results = clean_for_json(results, base_url)
-    _strip_roi_detection_urls(clean_results)
     clean_results["result_json"] = _asset(json_path, base_url)
 
     with json_path.open("w", encoding="utf-8") as f:
@@ -304,6 +303,11 @@ def _add_axial_classification_urls(
             level_name = result.get("level_name")
             combined_path = combined_image_paths.get(level_name)
             combined_asset = _asset(combined_path, base_url)
+            if combined_asset:
+                # The individual classifiers do not save their nominal axial
+                # paths. The combined renderer saves the actual Grad-CAM image.
+                result["gradcam_path"] = combined_asset["path"]
+                result["gradcam_image"] = combined_asset
             if combined_asset and combined_asset.get("url"):
                 result["url"] = combined_asset["url"]
 

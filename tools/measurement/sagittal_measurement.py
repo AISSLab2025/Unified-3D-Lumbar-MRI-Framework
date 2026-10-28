@@ -74,7 +74,7 @@ def display_image(image, title=None, cmap='gray', save_dir='output/measurement/s
     """Helper function to save images with proper formatting
     Args:
         image: The image to display/save
-        title: Title for the plot
+        title: Filename descriptor (not drawn on the image)
         cmap: Colormap to use
         save_dir: Directory to save images
         patient_id: Patient identifier
@@ -82,8 +82,8 @@ def display_image(image, title=None, cmap='gray', save_dir='output/measurement/s
         function_name: Name of the calling function
     """
     plt.figure(figsize=(10, 10))
-    if title:
-        plt.title(title)
+    # Keep the descriptor in the filename, but do not burn a heading into
+    # sagittal images. Anatomical annotations remain inside the image.
     plt.imshow(image, cmap=cmap)
     plt.axis('off')
     

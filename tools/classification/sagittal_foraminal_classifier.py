@@ -17,6 +17,27 @@ from tools.classification.models.sagittal_model import SwinWithCAMUncertainty
 _CLASSIFICATION_DIR_CLEANED = False
 
 
+def draw_level_label(image, bbox, level_name, color):
+    """Label a known ROI beside its box, keeping the heatmap visible."""
+    if not level_name:
+        return
+    height, width = image.shape[:2]
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    scale = max(0.35, min(0.65, width / 1000.0))
+    text = str(level_name)
+    (text_width, text_height), baseline = cv2.getTextSize(text, font, scale, 1)
+    x1, y1, x2, y2 = bbox
+    x = int(x2) + 8
+    if x + text_width + 3 >= width:
+        x = int(x1) - text_width - 8
+    x = max(3, min(x, width - text_width - 3))
+    y = max(text_height + 3, min(int((y1 + y2) / 2) + text_height // 2,
+                               height - baseline - 3))
+    # Black outline preserves contrast against both anatomy and bright CAMs.
+    cv2.putText(image, text, (x, y), font, scale, (0, 0, 0), 3, cv2.LINE_AA)
+    cv2.putText(image, text, (x, y), font, scale, color, 1, cv2.LINE_AA)
+
+
 def normalize_path(path_str: Any) -> Path:
     if not path_str:
         return Path()
@@ -312,6 +333,7 @@ def Sagittal_ROI_classification(
 
     # Dictionaries to track base image slices and output paths
     slice_visualizations: Dict[Path, Optional[np.ndarray]] = {}
+    slice_level_labels = {}
     slice_cam_paths: Dict[Path, Path] = {}
 
     for roi in roi_list:
@@ -425,6 +447,8 @@ def Sagittal_ROI_classification(
 
             # Draw the boundary box in the class color with thickness=2
             cv2.rectangle(slice_img, (x1i, y1i), (x2i, y2i), color_bgr, thickness=2)
+            slice_level_labels.setdefault(normalized_overlay_path, []).append(
+                ((x1i, y1i, x2i, y2i), roi.get("level_name"), color_bgr))
             slice_visualizations[normalized_overlay_path] = slice_img
             
         results.append({
@@ -452,6 +476,9 @@ def Sagittal_ROI_classification(
     for normalized_overlay_path, slice_img in slice_visualizations.items():
         if slice_img is not None:
             gradcam_path = slice_cam_paths[normalized_overlay_path]
+            # Draw after every CAM is pasted so later ROIs cannot erase labels.
+            for bbox, level_name, color in slice_level_labels.get(normalized_overlay_path, []):
+                draw_level_label(slice_img, bbox, level_name, color)
             cv2.imwrite(str(gradcam_path), slice_img)
 
     print(f"\n[TIMING] Sagittal Foraminal Classification Time: {total_classification_time:.4f} seconds")
