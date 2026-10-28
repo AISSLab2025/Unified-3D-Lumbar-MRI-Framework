@@ -435,3 +435,43 @@ Set `OLLAMA_MODELS` each time you manually start that server. Setting it in the
 chatbot `.env` does not configure a separate Ollama process or system service.
 Changing model storage does not move existing downloaded models automatically.
 These are instructions only; no weights or model server are included here.
+
+
+## Citation
+
+If you use this framework, the associated code, or datasets in your research, please cite the following works:
+
+```bibtex
+@article{Abdulmahmod2026SagittalMRI,
+  title   = {Medical Spine Sagittal MRI Dataset for Segmentation and Foraminal Stenosis Detection},
+  author  = {Abdulmahmod, Osamah F. and Al-antari, Mugahed A. and Kwon, Hyunwook and others},
+  journal = {Scientific Data},
+  volume  = {13},
+  pages   = {809},
+  year    = {2026},
+  doi     = {10.1038/s41597-026-07138-x}
+}
+
+@dataset{Kwon2026AxialMRI,
+  title     = {Medical Lumbar Spine 3D Axial MRI Dataset for Stenosis Detection, Severity Classification, and Anatomical Segmentation},
+  author    = {Kwon, Hyunwook and Abdulmahmod, Osamah F. and Habib, Afnan and Raza, Mukhlis and Bütün, Ertan and Talo, Muhammed and Kaplan, Metin and Ertuğrul, Bilal and Al-antari, Mugahed A.},
+  publisher = {Mendeley Data},
+  version   = {V1},
+  year      = {2026},
+  doi       = {10.17632/wjxkrkxhb8.1}
+}
+
+@inproceedings{Abdulmahmod2025LumbarStenosis,
+  title     = {A Novel Lumbar Foraminal Stenosis Detection and Classification Framework Using 3D Sagittal MRI Dataset},
+  author    = {Abdulmahmod, Osamah F. and Habib, Afnan and Raza, Mukhlis and Gu, Yeong Hyeon and Talo, Muhammed and Al-antari, Mugahed A.},
+  booktitle = {2025 9th International Artificial Intelligence and Data Processing Symposium (IDAP)},
+  pages     = {1--7},
+  year      = {2025},
+  publisher = {IEEE},
+  doi       = {10.1109/IDAP68205.2025.11222352}
+}
+```
+
+We appreciate your acknowledgment of our work. Please cite the relevant publications if you use, modify, or build upon this repository.
+
+
