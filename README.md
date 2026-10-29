@@ -4,7 +4,7 @@ This framework analyzes lumbar spine MRI studies containing sagittal and axial
 DICOM series. It combines ROI detection, stenosis classification, anatomical
 segmentation, and measurements, and provides the results through a FastAPI API.
 
-The optional [SwarmSpine chatbot](#9-run-the-chatbot-locally) provides a
+The integrated [SwarmSpine chatbot](#9-run-the-chatbot-locally) provides a
 browser interface for uploading studies, reviewing images and measurements,
 and asking questions. Imaging inference and the chatbot use separate Python
 environments. A local Ollama service supplies the language model.
@@ -16,8 +16,14 @@ environments. A local Ollama service supplies the language model.
 | Ollama | 11434 | Separate local service |
 
 Open the chatbot at `http://127.0.0.1:8001`. All three services can run on the
-same PC in WSL; ngrok is optional and is not needed for local use. Neither
+same PC in WSL and communicate through localhost. No ngrok account, tunnel,
+or public API address is required. Neither
 imaging model weights nor LLM weights are included in this repository.
+
+For the integrated workflow, complete sections **1–4**, then **9**. Upload
+the study through the chatbot once both servers and Ollama are running.
+Sections 5 and 7 describe alternative API-only workflows; they are not extra
+steps required to use the chatbot.
 
 ## How the code works
 
@@ -141,7 +147,8 @@ conda activate lss-framework
 python -m uvicorn api:app --host 127.0.0.1 --port 8000 --workers 1
 ```
 
-Keep this terminal running. Open [the API interface](http://127.0.0.1:8000/docs)
+Keep this terminal running and continue to section 9 for the chatbot.
+To use the API directly instead, open [the API interface](http://127.0.0.1:8000/docs)
 in your browser:
 
 1. Expand **POST /predict**.
@@ -219,26 +226,21 @@ print(result["result_json"])
 This uses the same pipeline and output folders as the API. Without a server
 base URL, output image references use local filesystem paths.
 
-## 8. Share the API
+## 8. Local connection between components
 
-With the local API running, open another terminal and start ngrok using your
-installed and configured ngrok account:
+The integrated project runs on one PC:
 
-```bash
-ngrok http 8000
+```text
+Browser -> chatbot: http://127.0.0.1:8001
+Chatbot -> imaging API: http://127.0.0.1:8000/predict
+Chatbot -> local LLM: http://127.0.0.1:11434
+Image retrieval -> imaging API: http://127.0.0.1:8000/static/...
 ```
 
-Copy its HTTPS forwarding address and use it as the client base URL:
-
-```bash
-python examples/predict.py examples/data/0004.zip \
-  --url https://YOUR-TUNNEL.ngrok.app --output response.json
-```
-
-Users can also open `https://YOUR-TUNNEL.ngrok.app/docs` and upload a ZIP through
-the API interface. Keep the API server and ngrok running while the endpoint is
-in use. The current API has no authentication; share it only with intended
-research users and submit studies sequentially.
+The chatbot sends the study to the local API and uses its returned image URLs.
+Keep the API, chatbot, and Ollama running in the same Linux/WSL distribution.
+Only open port 8001 in the browser for the integrated interface; there is no
+separate upload step through the API documentation page.
 
 ## 9. Run the chatbot locally
 
@@ -254,8 +256,8 @@ the chatbot and its local language model. All commands are for Linux/WSL.
 | Chatbot | http://127.0.0.1:8001 | Browser interface and study questions |
 | Ollama | http://127.0.0.1:11434 | Local language model |
 
-Use the same Linux/WSL distribution for these services. Ngrok is unnecessary
-for local use. Python packages do not install the Ollama service or its model.
+Use the same Linux/WSL distribution for these services. Python packages do not
+install the Ollama service or its model.
 
 ### First-time chatbot setup
 
@@ -379,7 +381,7 @@ JSON but are selected only for detection requests.
 | Address already in use | Stop the old process before restarting that service |
 | Old labels or image titles | Restart backend and regenerate images; code changes do not edit saved PNGs |
 
-An old ngrok URL in saved JSON is not automatically rewritten to localhost.
+An old remote URL in saved JSON is not automatically rewritten to localhost.
 Use results from the local API. Windows-hosted Ollama may require a different
 reachable host address from WSL. Changes require restarting the affected service.
 
