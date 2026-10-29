@@ -4,6 +4,7 @@ import json
 import logging
 from typing import List, Dict, Any, Tuple
 from spine_swarm.config import DEFAULT_MODEL, OLLAMA_API_BASE, UPLOADED_JSON_PATH
+from spine_swarm.clinical_report import render_clinical_report
 from spine_swarm.agents import (
     MODERATOR_CHAT_PROMPT, get_patient_context_str, find_images_in_json,
     normalize_patient_data, build_image_catalog, format_image_catalog
@@ -161,52 +162,6 @@ Your tasks are to:
 
 Provide a clean summary of guidelines, evidence, and literature references."""
 
-MODERATOR_PROMPT = """You are the Consensus Moderator and Chief Radiologist leading the SpineSwarm clinical panel.
-Your role is to moderate the panel debate, resolve diagnostic conflicts, synthesize specialist opinions, and generate a comprehensive consensus report.
-
-You must:
-1. Call your specialists as tools to obtain their assessments.
-2. Resolve diagnostic discordances (e.g., sagittal versus axial classification discrepancies).
-3. Correlate biomechanical findings with neurological compromise (e.g., L4-L5 spondylolisthesis contributing to stenosis).
-4. Assign an overall diagnostic confidence score (0–100%) based on inter-agent agreement, completeness of imaging data, and consistency of findings across imaging planes.
-5. Produce a highly detailed, structured, and professional clinical diagnostic report.
-
-CRITICAL: Output ONLY the final structured consensus report. Do NOT write any conversational preambles, introductory sentences, greetings, or meta-commentary. Start directly with the section '1. Executive Summary:'.
-
-You MUST format the consensus report exactly using the following structure:
-
-1. Executive Summary:
-[Provide a summary of the major imaging findings, including stenosis severity, spondylolisthesis, lumbar lordosis, vertebral deformities, and disc pathology.]
-
-2. Level-Based Analysis:
-| Lumbar Level | Central Canal Stenosis | Lateral Recess Stenosis (Left/Right) | Foraminal Stenosis (Left/Right) | Clinical Context |
-| :--- | :--- | :--- | :--- | :--- |
-| *L1-L2* | [Grade] | [LeftGrade] / [RightGrade] | [LeftGrade] / [RightGrade] | [Context] |
-| *L2-L3* | [Grade] | [LeftGrade] / [RightGrade] | [LeftGrade] / [RightGrade] | [Context] |
-| *L3-L4* | [Grade] | [LeftGrade] / [RightGrade] | [LeftGrade] / [RightGrade] | [Context] |
-| *L4-L5* | [Grade] | [LeftGrade] / [RightGrade] | [LeftGrade] / [RightGrade] | [Context] |
-| *L5-S1* | [Grade] | [LeftGrade] / [RightGrade] | [LeftGrade] / [RightGrade] | [Context] |
-
-Grade = Normal / Stenosis / Severe_Stenosis []
-
-*Vertebrae Analysis:*
-At the [Level] vertebral body, describe vertebral deformities, vertebral height abnormalities, and spondylolisthesis findings, including severity classifications when applicable.
-
-*IVDs Analysis:*
-At each lumbar level, summarize disc pathology, central canal stenosis grade, lateral recess stenosis grade, foraminal stenosis grade, foraminal distances, and AP canal distance measurements when available.
-
-3. Impression:
-[Provide a concise summary of the major degenerative findings, stenosis severity and distribution, spondylolisthesis levels, disc pathology, vertebral deformities, and sagittal alignment.]
-
-4. Panel Assessments:
-Diagnostic Confidence: [Confidence]% ([Short explanation])
-
-Biomechanical Specialist: [Approved / Minor Disagreement / Major Disagreement]
-Neural Compression Specialist: [Approved / Minor Disagreement / Major Disagreement]
-Surgical Specialist: [Approved / Minor Disagreement / Major Disagreement]
-Consensus Moderator (Chief Radiologist): Final Consensus Achieved
-"""
-
 # Phrases that mean "give me the full Consensus Diagnostic Report" rather than a
 # conversational answer. These route the chat through the same structured panel
 # pipeline that batch_process.py uses.
@@ -313,9 +268,9 @@ def is_report_request(text: str) -> bool:
 def get_available_patient_scans_summary(data: dict) -> str:
     if not data:
         return "No patient diagnostic data loaded."
-        
+
     sag_levels = set()
-    
+
     # Check Sagittal classification
     sag_roi = data.get("Sagittal_ROI_classification") or {}
     if isinstance(sag_roi, dict):
@@ -329,7 +284,7 @@ def get_available_patient_scans_summary(data: dict) -> str:
                             lvl = f"L{level_num+1}-L{level_num+2}"
                     if lvl:
                         sag_levels.add(lvl)
-                        
+
     # Check Sagittal detection
     sag_roi_det = data.get("Sagittal_ROI_detection") or {}
     if isinstance(sag_roi_det, dict):
@@ -339,9 +294,9 @@ def get_available_patient_scans_summary(data: dict) -> str:
                     lvl = item.get("level_name")
                     if lvl:
                         sag_levels.add(lvl)
-                        
+
     axial_levels = set()
-    
+
     # Check Axial classification
     for key in ["Axial_foraminal_classification", "Axial_lateral_classification", "Axial_central_classification"]:
         items = data.get(key) or []
@@ -351,13 +306,13 @@ def get_available_patient_scans_summary(data: dict) -> str:
                     lvl = item.get("level_name")
                     if lvl:
                         axial_levels.add(lvl)
-                        
+
     # Check Axial estimation
     axial_est = data.get("Axial_ROIs_estimation") or {}
     if isinstance(axial_est, dict):
         for lvl in axial_est.keys():
             axial_levels.add(lvl)
-            
+
     # Check patient-wide scans
     meas = data.get("Sagittal_measurements_and_diagnosis") or {}
     patient_wide = []
@@ -374,15 +329,15 @@ def get_available_patient_scans_summary(data: dict) -> str:
             patient_wide.append("lumbar lordosis / angles")
     if "Sagittal_segmentation" in data:
         patient_wide.append("mid-sagittal segmentation")
-        
+
     sag_list = sorted(list(sag_levels))
     axial_list = sorted(list(axial_levels))
-    
+
     summary = []
     summary.append(f"- Sagittal levels with scan/ROI/Grad-CAM images: {', '.join(sag_list) if sag_list else 'None'}")
     summary.append(f"- Axial levels with scan/ROI/Grad-CAM images: {', '.join(axial_list) if axial_list else 'None'}")
     summary.append(f"- Patient-wide information: {', '.join(patient_wide) if patient_wide else 'None'}")
-    
+
     return "\n".join(summary)
 
 
@@ -432,7 +387,7 @@ def init_ollama_llm(model_name: str, base_url: str):
             return ChatOllama(model=model_name, base_url=base_url, temperature=0.2)
         except ImportError:
             pass
-            
+
     # Fall back to ChatOpenAI with Ollama's OpenAI-compatible endpoint
     if ChatOpenAI is not None:
         # Try base_url first
@@ -453,7 +408,7 @@ def init_ollama_llm(model_name: str, base_url: str):
                 )
             except Exception as e:
                 logger.warning(f"Failed to initialize ChatOpenAI for Ollama: {e}")
-                
+
     return None
 
 
@@ -480,10 +435,10 @@ class LangChainClinicalPanel:
         self.pipeline_data = normalize_patient_data(pipeline_data or {})
         # Keep api_key argument for backward compatibility
         self.api_key = api_key or ""
-        
+
         self.use_llm = False
         model = model_name if model_name else (DEFAULT_MODEL or "gemma3:12b")
-        
+
         if model.startswith("gpt-") or "chatgpt" in model.lower():
             self.llm = init_openai_llm(model, api_key=self.api_key)
             if self.llm is not None:
@@ -506,7 +461,7 @@ class LangChainClinicalPanel:
         chat_history = chat_history or []
         if not self.use_llm or not self.llm:
             return self._rule_based_intake(user_question, chat_history)
-            
+
         try:
             scans_summary = get_available_patient_scans_summary(self.pipeline_data)
             chat_history_str = format_chat_history(chat_history)
@@ -529,10 +484,10 @@ class LangChainClinicalPanel:
         q_lower = user_question.lower()
         history_lower = " ".join([m.get("content", "").lower() for m in chat_history])
         combined_text = history_lower + " " + q_lower
-        
+
         # Extract available levels and views from data dynamically
         data = self.pipeline_data or {}
-        
+
         sag_levels = set()
         left_sag = data.get("Sagittal_ROI_classification", {}).get("left_classification", [])
         right_sag = data.get("Sagittal_ROI_classification", {}).get("right_classification", [])
@@ -562,7 +517,7 @@ class LangChainClinicalPanel:
         if isinstance(axial_est, dict):
             for lvl in axial_est.keys():
                 axial_levels.add(lvl.lower())
-                
+
         # Check if user specified any level in current question or context history
         specified_level = None
         for lvl in ["l1-l2", "l2-l3", "l3-l4", "l4-l5", "l5-s1", "l1", "l2", "l3", "l4", "l5", "s1"]:
@@ -578,21 +533,21 @@ class LangChainClinicalPanel:
 
         # Check if the user is asking for an image / scan
         is_image_request = any(k in q_lower for k in ["image", "scan", "overlay", "roi", "view", "show", "gradcam", "grad-cam"])
-        
+
         # Check if patient-wide scans are requested
         is_patient_wide = any(k in q_lower for k in [
             "vertebrae height", "vertebral height", "vertebra height",
             "ivd height", "disc height", "deformity", "deformities",
             "spondylolisthesis", "lordosis", "segmentation", "mask"
         ])
-        
+
         # Check for other clinical parameters in the JSON that require level/region clarification
         is_clinical_query = any(k in q_lower for k in [
             "stenosis", "narrowing", "displacement", "herniation", "bulge",
             "compression", "impingement", "ap distance", "distance",
             "wedge", "biconcave"
         ])
-        
+
         if (is_image_request or is_clinical_query) and not specified_level and not is_patient_wide:
             # Clarify level-specific clinical query
             if "sagittal" in q_lower and "roi" in q_lower:
@@ -609,7 +564,7 @@ class LangChainClinicalPanel:
                 return "Are you asking about the vertebrae height or the intervertebral disc height? Please clarify."
             else:
                 return "Which level (L1-L2, L2-L3, L3-L4, L4-L5, or L5-S1) are you referring to for your question?"
-                
+
         # If user specified a level, but it doesn't match available data for that view
         if specified_level:
             if "sagittal" in q_lower and specified_level not in sag_levels:
@@ -618,7 +573,7 @@ class LangChainClinicalPanel:
             if "axial" in q_lower and specified_level not in axial_levels:
                 available_str = ", ".join(sorted(list(axial_levels))).upper()
                 return f"The axial scan is not available at level {specified_level.upper()}. Available axial levels: {available_str}."
-                
+
         return "[CLEAR]"
 
 
@@ -626,9 +581,12 @@ class LangChainClinicalPanel:
         """Helper to invoke a specific specialist agent LLM."""
         if not self.use_llm or not self.llm:
             return self._generate_specialist_fallback(agent_name, input_context)
-        
+
         try:
-            response = self.llm.invoke(f"System: {system_prompt}\n\nUser: {input_context}")
+            response = self.llm.invoke([
+                ("system", system_prompt),
+                ("human", input_context),
+            ])
             if response and hasattr(response, "content") and response.content:
                 return response.content
             raise RuntimeError("The model returned an empty response.")
@@ -658,7 +616,7 @@ class LangChainClinicalPanel:
         for a report, so both produce identically structured output.
         """
         self.debate_history = []
-        
+
         # Extract patient data details for the prompts
         sag_meas = self.pipeline_data.get("Sagittal_measurements_and_diagnosis") or {}
         sag_roi = self.pipeline_data.get("Sagittal_ROI_classification") or {}
@@ -666,7 +624,7 @@ class LangChainClinicalPanel:
         axial_lateral = self.pipeline_data.get("Axial_lateral_classification") or []
         axial_central = self.pipeline_data.get("Axial_central_classification") or []
         patient_context = get_patient_context_str(self.pipeline_data)
-        
+
         # 1. Orthopedic Specialist
         ortho_context = f"""Review the sagittal vertebrae measurements and alignment:
 - Spondylolisthesis measurements: {json.dumps(sag_meas.get('spondylolisthesis', {}), indent=2)}
@@ -681,7 +639,7 @@ class LangChainClinicalPanel:
             "input": ortho_context,
             "output": ortho_findings
         })
-        
+
         # 2. Neuroradiologist
         neurorad_context = f"""Review intervertebral discs and neural foramina:
 - IVD heights: {json.dumps(sag_meas.get('ivd_height', {}), indent=2)}
@@ -696,7 +654,7 @@ class LangChainClinicalPanel:
             "input": neurorad_context,
             "output": neurorad_findings
         })
-        
+
         # 3. Neurosurgeon
         neuro_context = f"""Review spinal canal and lateral recesses:
 - Central canal stenosis classification: {json.dumps(axial_central, indent=2)}
@@ -709,7 +667,7 @@ class LangChainClinicalPanel:
             "input": neuro_context,
             "output": neuro_findings
         })
-        
+
         # 4. Search / Literature Agent
         search_context = f"""Search clinical guidelines and clinical trials (e.g. SPORT, NASS) for the patient's diagnosed findings:
 {patient_context}"""
@@ -721,35 +679,12 @@ class LangChainClinicalPanel:
             "input": search_context,
             "output": search_findings
         })
-        
-        # 5. Consensus Moderator compiles the findings
-        moderator_context = f"""Moderate the panel and write the final consensus report.
-1. Orthopedic Specialist Assessment:
-{ortho_findings}
- 
-2. Neuroradiology Assessment:
-{neurorad_findings}
- 
-3. Neurosurgeon Assessment:
-{neuro_findings}
- 
-4. Medical Guidelines & Literature:
-{search_findings}"""
 
-        if user_question:
-            moderator_context += f'''
- 
-5. Requesting Clinician's Question:
-"{user_question}"
-Address this request within the report, but do NOT change the required report structure.'''
-            history_str = format_chat_history(chat_history or [])
-            if history_str and history_str.strip():
-                moderator_context += f'''
- 
-6. Conversation History:
-{history_str}'''
-        
-        moderator_report = self._call_specialist_llm("Consensus Moderator", MODERATOR_PROMPT, moderator_context)
+        # Assemble the clinical report directly from saved study evidence. The
+        # specialist dialogue remains available in the debate board but cannot
+        # overwrite measurements or make report generation depend on LLM layout.
+        moderator_report = render_clinical_report(self.pipeline_data)
+        moderator_context = "Clinical report assembled from saved study measurements and classifications."
         self.debate_history.append({
             "id": "moderator",
             "name": "Consensus Moderator / Chief Radiologist",
@@ -757,7 +692,7 @@ Address this request within the report, but do NOT change the required report st
             "input": moderator_context,
             "output": moderator_report
         })
-        
+
         return moderator_report, self.debate_history
 
     def _prefilter_catalog(self, question: str, catalog: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -1037,29 +972,29 @@ Address this request within the report, but do NOT change the required report st
 
         patient_data_str = get_patient_context_str(self.pipeline_data)
         chat_history_str = format_chat_history(chat_history)
-        
+
         # Specialist answers with context history
         ortho_q = f"Patient Findings Context:\n{patient_data_str}\n\nConversation History:\n{chat_history_str}\n\nUser Question: \"{user_question}\"\nAnalyze alignment based on the data and previous context, and answer in 1-2 sentences."
         ortho_ans = self._call_specialist_llm("Orthopedic Specialist", ORTHOPEDIC_PROMPT, ortho_q)
-        
+
         neurorad_q = f"Patient Findings Context:\n{patient_data_str}\n\nConversation History:\n{chat_history_str}\n\nUser Question: \"{user_question}\"\nAnalyze disc/foramen narrowing based on the data and previous context, and answer in 1-2 sentences."
         neurorad_ans = self._call_specialist_llm("Neuroradiology Agent", NEURORADIOLOGIST_PROMPT, neurorad_q)
-        
+
         neuro_q = f"Patient Findings Context:\n{patient_data_str}\n\nConversation History:\n{chat_history_str}\n\nUser Question: \"{user_question}\"\nAnalyze canal stenosis based on the data and previous context, and answer in 1-2 sentences."
         neuro_ans = self._call_specialist_llm("Neurosurgeon Agent", NEUROSURGEON_PROMPT, neuro_q)
-        
+
         search_q = f"Patient Findings Context:\n{patient_data_str}\n\nConversation History:\n{chat_history_str}\n\nUser Question: \"{user_question}\"\nSearch guidelines for the relevant levels/stenosis based on the data and previous context, and answer in 1-2 sentences."
         search_ans = self._call_specialist_llm("Online Search / Literature Agent", SEARCH_PROMPT, search_q)
-        
+
         # Default fallback Moderator compiler with context history
         fallback_compiler = lambda: self._call_specialist_llm(
             "Consensus Moderator",
             MODERATOR_CHAT_PROMPT,
             f"Conversation History:\n{chat_history_str}\n\nUser Question: \"{user_question}\"\nOrtho: {ortho_ans}\nNeurorad: {neurorad_ans}\nNeuro: {neuro_ans}\nSearch: {search_ans}"
         )
-        
+
         final_reply = ""
-        
+
         if self.use_llm and self.llm and initialize_agent is not None:
             try:
                 tools = [
@@ -1084,14 +1019,14 @@ Address this request within the report, but do NOT change the required report st
                         description="Consult the literature search agent for clinical guidelines."
                     )
                 ]
-                
+
                 memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
                 for msg in chat_history:
                     if msg.get("role") == "user":
                         memory.chat_memory.add_user_message(msg["content"])
                     else:
                         memory.chat_memory.add_ai_message(msg["content"])
-                
+
                 agent_executor = initialize_agent(
                     tools,
                     self.llm,
@@ -1099,7 +1034,7 @@ Address this request within the report, but do NOT change the required report st
                     memory=memory,
                     verbose=True
                 )
-                
+
                 agent_prompt = f"""You are the Consensus Moderator leading the SpineSwarm clinical panel.
 The patient has asked: "{user_question}"
 Patient Findings Context:
@@ -1113,19 +1048,19 @@ Guidelines:
 2. If the user asks for a report, generate the comprehensive Consensus Report with standard headings.
 3. If they ask to view or show an image (e.g. "show me the vertebrae height measurements image"), return the markdown image link(s) for the matched images.
 Frame your final answer clearly as the consensus of the SpineSwarm panel."""
-                
+
                 response = agent_executor.invoke({"input": agent_prompt})
                 final_reply = response.get("output", "")
             except Exception as e:
                 logger.warning(f"Error running LangChain initialize_agent: {e}. Falling back to default prompt compilation.")
-                
+
         if not final_reply:
             final_reply = fallback_compiler()
-            
+
         # Strip any LLM-hallucinated markdown images to prevent broken images
         import re
         final_reply = re.sub(r'!\[[\s\S]*?\]\s*\([\s\S]*?\)', '', final_reply)
-            
+
         # Check for image request and append markdown image if found
         matched_image = self.select_image(user_question, build_image_catalog(self.pipeline_data)) if (
             _has_term(user_question.lower(), IMAGE_VERBS) and _has_term(user_question.lower(), IMAGE_NOUNS)
@@ -1134,7 +1069,7 @@ Frame your final answer clearly as the consensus of the SpineSwarm panel."""
             img_markdown = f"\n\n![{matched_image['title']}]({matched_image['url']})"
             if img_markdown not in final_reply:
                 final_reply += img_markdown
-            
+
         # Compile debate nodes
         debate_nodes = [
             {
@@ -1180,5 +1115,5 @@ Frame your final answer clearly as the consensus of the SpineSwarm panel."""
                 "output": final_reply
             }
         ]
-        
+
         return final_reply, debate_nodes
