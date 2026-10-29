@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpineSwarm: AI Lumbar Spine Patient & Clinician Assistant</title>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(17, 24, 39, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --accent-blue: #3b82f6;
+            --accent-blue-glow: rgba(59, 130, 246, 0.35);
+            --accent-green: #10b981;
+            --accent-orange: #f97316;
+            --accent-teal: #14b8a6;
+            --user-bubble: #1e40af;
+            --agent-bubble: #1f2937;
+            --node-bg: rgba(15, 23, 42, 0.85);
+            --graph-bg: radial-gradient(circle at center, rgba(17, 24, 39, 0.5) 0%, rgba(11, 15, 25, 0.9) 100%);
+            --chip-bg: rgba(255, 255, 255, 0.04);
+            --input-bg: rgba(0, 0, 0, 0.3);
+            --shadow-color: rgba(0, 0, 0, 0.35);
+            --header-bg: rgba(17, 24, 39, 0.6);
+            --chat-history-bg: rgba(0, 0, 0, 0.15);
+            --chat-input-area-bg: rgba(17, 24, 39, 0.4);
+            --quick-questions-bg: rgba(17, 24, 39, 0.2);
+            --board-bg: rgba(11, 15, 25, 0.95);
+            /* Surfaces and text that used to be hardcoded for the dark theme only */
+            --subtle-bg: rgba(255, 255, 255, 0.03);
+            --subtle-border: rgba(255, 255, 255, 0.06);
+            --scrollbar-thumb: rgba(255, 255, 255, 0.15);
+            --scrollbar-thumb-hover: rgba(255, 255, 255, 0.25);
+            --upload-border: rgba(255, 255, 255, 0.15);
+            --upload-bg: rgba(0, 0, 0, 0.15);
+            --heading-accent: #60a5fa;
+            --agent-label: #2dd4bf;
+            --user-label: #93c5fd;
+            --code-bg: rgba(0, 0, 0, 0.35);
+            --table-bg: rgba(0, 0, 0, 0.25);
+            --table-header-bg: rgba(255, 255, 255, 0.05);
+            --table-header-text: #f9fafb;
+            --table-row-border: rgba(255, 255, 255, 0.06);
+            --table-cell-text: #d1d5db;
+            --table-stripe-bg: rgba(255, 255, 255, 0.02);
+            --node-idle-border: rgba(255, 255, 255, 0.08);
+            --node-hover-border: rgba(255, 255, 255, 0.3);
+            --node-hover-glow: rgba(255, 255, 255, 0.1);
+            --severe-color: #f87171;
+            --moderate-color: #fb923c;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --border-color: rgba(0, 0, 0, 0.08);
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --accent-blue: #2563eb;
+            --accent-blue-glow: rgba(37, 99, 235, 0.2);
+            --accent-green: #16a34a;
+            --accent-orange: #ea580c;
+            --accent-teal: #0d9488;
+            --user-bubble: #2563eb;
+            --agent-bubble: #f1f5f9;
+            --node-bg: rgba(255, 255, 255, 0.9);
+            --graph-bg: radial-gradient(circle at center, rgba(255, 255, 255, 0.5) 0%, rgba(226, 232, 240, 0.9) 100%);
+            --chip-bg: rgba(0, 0, 0, 0.04);
+            --input-bg: rgba(255, 255, 255, 0.85);
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --header-bg: rgba(241, 245, 249, 0.8);
+            --chat-history-bg: #f1f5f9;
+            --chat-input-area-bg: rgba(241, 245, 249, 0.8);
+            --quick-questions-bg: rgba(241, 245, 249, 0.5);
+            --board-bg: #f8fafc;
+            --subtle-bg: rgba(15, 23, 42, 0.03);
+            --subtle-border: rgba(15, 23, 42, 0.09);
+            --scrollbar-thumb: rgba(15, 23, 42, 0.2);
+            --scrollbar-thumb-hover: rgba(15, 23, 42, 0.35);
+            --upload-border: rgba(15, 23, 42, 0.18);
+            --upload-bg: rgba(15, 23, 42, 0.03);
+            --heading-accent: #1d4ed8;
+            --agent-label: #0f766e;
+            --user-label: #dbeafe;
+            --code-bg: rgba(15, 23, 42, 0.06);
+            --table-bg: #ffffff;
+            --table-header-bg: #e2e8f0;
+            --table-header-text: #0f172a;
+            --table-row-border: rgba(15, 23, 42, 0.09);
+            --table-cell-text: #334155;
+            --table-stripe-bg: rgba(15, 23, 42, 0.02);
+            --node-idle-border: rgba(15, 23, 42, 0.12);
+            --node-hover-border: rgba(37, 99, 235, 0.45);
+            --node-hover-glow: rgba(37, 99, 235, 0.15);
+            --severe-color: #dc2626;
+            --moderate-color: #ea580c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--scrollbar-thumb-hover);
+        }
+
+        header {
+            background: var(--header-bg);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.25rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-title h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .badge {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid var(--accent-blue);
+            color: #60a5fa;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.2rem 0.5rem;
+            border-radius: 9999px;
+            text-transform: uppercase;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 1.5rem;
+            flex: 1;
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 1.5rem;
+            height: 100vh;
+            min-height: 0;
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 20px var(--shadow-color);
+            transition: border-color 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--subtle-border);
+            padding-bottom: 0.5rem;
+        }
+
+        /* Upload area styling */
+        .upload-zone {
+            border: 2px dashed var(--upload-border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--upload-bg);
+            margin-bottom: 1rem;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.05);
+            box-shadow: 0 0 12px var(--accent-blue-glow);
+        }
+
+        .upload-zone p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .file-info {
+            display: none;
+            background: var(--subtle-bg);
+            border: 1px solid var(--subtle-border);
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+            color: var(--accent-teal);
+            margin-bottom: 1rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .textarea-input {
+            width: 100%;
+            height: 90px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.75rem;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.8rem;
+            resize: none;
+            outline: none;
+            margin-bottom: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .textarea-input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .btn {
+            width: 100%;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            box-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn:disabled {
+            background: #4b5563;
+            cursor: not-allowed;
+            box-shadow: none;
+            opacity: 0.5;
+        }
+
+        /* Pipeline Monitor */
+        .pipeline-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+
+        .pipeline-step {
+            display: none; /* Hide by default */
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            padding: 0.4rem 0.5rem;
+            border-radius: 4px;
+            background: var(--subtle-bg);
+            border-left: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .pipeline-step.active, .pipeline-step.completed {
+            display: flex; /* Show only when active or completed */
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .pipeline-step.active {
+            color: var(--text-primary);
+            background: rgba(59, 130, 246, 0.05);
+            border-left-color: var(--accent-blue);
+        }
+
+        .pipeline-step.completed {
+            color: var(--accent-green);
+            border-left-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.04);
+        }
+
+        /* Active loading dots */
+        .active-dots::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+            display: inline-block;
+            width: 12px;
+            text-align: left;
+        }
+
+        .pipeline-step:not(.active) .active-dots {
+            display: none;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+
+        .step-icon {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 1px solid var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.55rem;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .pipeline-step.completed .step-icon {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: #000;
+        }
+
+        .pipeline-step.active .step-icon {
+            border-color: var(--accent-blue);
+            background: var(--accent-blue);
+            color: white;
+            box-shadow: 0 0 6px var(--accent-blue-glow);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Chat box styling */
+        .chat-panel {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            box-shadow: 0 4px 20px var(--shadow-color);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--header-bg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header h2 {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .chat-history {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            background: var(--chat-history-bg);
+        }
+
+        .chat-bubble {
+            max-width: 80%;
+            padding: 1rem;
+            border-radius: 8px;
+            line-height: 1.5;
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            box-shadow: 0 2px 10px var(--shadow-color);
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chat-bubble.user {
+            align-self: flex-end;
+            background: var(--user-bubble);
+            color: white;
+            border-bottom-right-radius: 0;
+        }
+
+        .chat-bubble.agent {
+            align-self: flex-start;
+            background: var(--agent-bubble);
+            color: var(--text-primary);
+            border-bottom-left-radius: 0;
+            border: 1px solid var(--subtle-border);
+        }
+
+        .bubble-header {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .bubble-header.user {
+            color: var(--user-label);
+            justify-content: flex-end;
+        }
+
+        .bubble-header.agent {
+            color: var(--agent-label);
+        }
+
+        .chat-bubble.agent h1, .chat-bubble.agent h2, .chat-bubble.agent h3 {
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0.25rem;
+            color: var(--heading-accent);
+            border-bottom: 1px solid var(--subtle-border);
+            padding-bottom: 0.2rem;
+        }
+
+        .chat-bubble.agent ul, .chat-bubble.agent ol {
+            margin-left: 1.25rem;
+            margin-top: 0.25rem;
+        }
+
+        .chat-bubble.agent li {
+            margin-bottom: 0.25rem;
+        }
+
+        .chat-bubble.agent p {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            align-self: flex-start;
+            background: var(--agent-bubble);
+            padding: 0.75rem 1.25rem;
+            border-radius: 15px;
+            display: none;
+            gap: 0.35rem;
+            align-items: center;
+            box-shadow: 0 2px 10px var(--shadow-color);
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        /* Chips / Quick questions */
+        .quick-questions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--quick-questions-bg);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .chip {
+            background: var(--chip-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .chip:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--accent-blue);
+            color: var(--text-primary);
+        }
+
+        /* Input area */
+        .chat-input-area {
+            padding: 1rem 1.5rem;
+            background: var(--chat-input-area-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.8rem 1rem;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .chat-input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .send-btn {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0.8rem 1.25rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .send-btn:hover {
+            opacity: 0.9;
+            box-shadow: 0 0 10px var(--accent-blue-glow);
+        }
+
+        /* Tabs and Visual Graph styles */
+        .tab-btn:hover {
+            color: var(--text-primary) !important;
+            background: var(--subtle-bg) !important;
+        }
+
+        .tab-btn.active {
+            color: var(--text-primary) !important;
+            background: rgba(59, 130, 246, 0.15) !important;
+            border-bottom: 2px solid var(--accent-blue) !important;
+        }
+
+        .graph-node-element {
+            box-shadow: 0 4px 12px var(--shadow-color);
+            border: 1px solid var(--node-idle-border);
+            transition: all 0.3s ease;
+        }
+
+        .graph-node-element:hover {
+            border-color: var(--node-hover-border) !important;
+            box-shadow: 0 0 15px var(--node-hover-glow) !important;
+            transform: scale(1.03);
+        }
+
+        @keyframes strokePulse {
+            to {
+                stroke-dashoffset: -20;
+            }
+        }
+
+        /* Rendered Markdown (chat replies, node inspector, consensus report) */
+        .md-body > *:first-child { margin-top: 0; }
+        .md-body > *:last-child { margin-bottom: 0; }
+
+        .md-body p {
+            margin: 0 0 0.6rem 0;
+            color: var(--text-primary);
+        }
+
+        .md-body h1, .md-body h2, .md-body h3,
+        .md-body h4, .md-body h5 {
+            color: var(--heading-accent);
+            line-height: 1.35;
+            font-weight: 700;
+        }
+
+        .md-body h3.md-section {
+            font-size: 0.95rem;
+            margin: 1.5rem 0 0.6rem;
+            padding-bottom: 0.35rem;
+            border-bottom: 1px solid var(--border-color);
+            letter-spacing: -0.01em;
+        }
+
+        .md-body h4.md-sub {
+            font-size: 0.85rem;
+            margin: 1.1rem 0 0.4rem;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            opacity: 0.85;
+        }
+
+        .md-body ul { margin: 0 0 0.6rem 1.25rem; }
+        .md-body li { margin-bottom: 0.25rem; }
+        .md-body strong { color: var(--text-primary); font-weight: 700; }
+        .md-body em { font-style: italic; }
+        .md-body a { color: var(--accent-blue); }
+
+        .md-body code {
+            background: var(--code-bg);
+            border-radius: 4px;
+            padding: 0.1rem 0.3rem;
+            font-size: 0.9em;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
+        .md-table-wrap {
+            overflow-x: auto;
+            margin: 0.85rem 0 1.1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .md-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            text-align: left;
+            background: var(--table-bg);
+        }
+
+        .md-table th {
+            padding: 0.7rem 1rem;
+            font-weight: 600;
+            color: var(--table-header-text);
+            background: var(--table-header-bg);
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        .md-table td {
+            padding: 0.6rem 1rem;
+            color: var(--table-cell-text);
+            border-bottom: 1px solid var(--table-row-border);
+        }
+
+        .md-table tbody tr:last-child td { border-bottom: none; }
+        .md-table tbody tr:nth-child(even) { background: var(--table-stripe-bg); }
+
+        .md-table td.sev-severe { color: var(--severe-color); font-weight: 700; }
+        .md-table td.sev-moderate { color: var(--moderate-color); font-weight: 600; }
+
+        .md-figure {
+            margin: 0.75rem 0;
+            text-align: center;
+        }
+
+        .md-figure img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px var(--shadow-color);
+        }
+
+        .md-figure figcaption {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Shown instead of a broken-image icon when the scan cannot be fetched */
+        .md-figure-error img { display: none; }
+
+        .md-figure-error figcaption::before {
+            content: "Image unavailable - ";
+            color: var(--severe-color);
+            font-weight: 600;
+        }
+
+        .graph-connection {
+            transition: all 0.3s ease;
+        }
+        
+        .pulse-path {
+            stroke: #3b82f6 !important;
+            stroke-width: 3px !important;
+            stroke-dasharray: 6, 4;
+            animation: strokePulse 1s linear infinite;
+            filter: drop-shadow(0 0 3px rgba(59, 130, 246, 0.5));
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Removed -->
+
+    <main class="main-container">
+        <!-- Left Column: Loader & Monitor -->
+        <div class="left-panel">
+            
+            <!-- Uploader Card -->
+            <div class="card">
+                <div class="card-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                    Ingest Tool Outputs
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.25rem; display: block;">Active LLM Model:</label>
+                    <select id="modelSelect" style="width: 100%; background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.5rem; border-radius: 6px; font-size: 0.8rem; outline: none; transition: border-color 0.3s ease;"></select>
+                </div>
+                <div id="apiKeyContainer" style="display: none; margin-bottom: 1rem;">
+                    <label style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.25rem; display: block;">OpenAI API Key (Required for ChatGPT):</label>
+                    <input type="password" id="apiKeyInput" placeholder="sk-proj-..." style="width: 100%; background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.5rem; border-radius: 6px; font-size: 0.8rem; outline: none; transition: border-color 0.3s ease;">
+                </div>
+                <div class="upload-zone" id="uploadZone">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" style="margin-bottom: 0.5rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+                    <p>Drag & Drop JSON or ZIP File here</p>
+                    <p style="font-size: 0.7rem; color: var(--text-secondary);">or click to browse local files</p>
+                    <input type="file" id="fileInput" accept=".json,.zip" style="display: none;">
+                </div>
+                <div class="file-info" id="fileInfo">
+                    <span id="fileName">DICOM ZIP or results.json</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="cursor:pointer;" onclick="resetFile()"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </div>
+                <div style="margin-top: 0.5rem;">
+                    <label style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.25rem; display: block;">Patient Clinical Symptoms:</label>
+                    <textarea class="textarea-input" id="symptomsInput" placeholder="Enter patient clinical symptoms here..."></textarea>
+                </div>
+                <button class="btn" id="analyzeBtn" onclick="runSpineSwarm()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Run SpineSwarm Analysis
+                </button>
+            </div>
+
+            <!-- Monitor Card -->
+            <div class="card" style="flex: 1;">
+                <div class="card-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
+                    Pipeline Tool Monitor
+                </div>
+                <div class="pipeline-list" id="pipelineMonitor">
+                    <div class="pipeline-step" id="step_01"><span class="step-icon">1</span> <span class="step-name">Identifier Tool</span><span class="active-dots"></span></div>
+                    <div class="pipeline-step" id="step_02"><span class="step-icon">2</span> <span class="step-name">Sagittal Slice Selection Tool</span><span class="active-dots"></span></div>
+                    <div class="pipeline-step" id="step_03"><span class="step-icon">3</span> <span class="step-name">Sagittal ROI Detection Tool</span><span class="active-dots"></span></div>
+                    <div class="pipeline-step" id="step_04"><span class="step-icon">4</span> <span class="step-name">Sagittal ROI Classification Tool</span><span class="active-dots"></span></div>
+                    <div class="pipeline-step" id="step_05"><span class="step-icon">5</span> <span class="step-name">Sagittal Segmentation Tool</span><span class="active-dots"></span></div>
+                    <div class="pipeline-step" id="step_06"><span class="step-icon">6</span> <span class="step-name">Sagittal Measurement Tool</span><span class="active-dots"></span></div>
+                    <div class="pipeline-step" id="step_07"><span class="step-icon">7</span> <span class="step-name">Centroid Extraction Tool</span><span class="active-dots"></span></div>
+                    <div class="pipeline-step" id="step_08"><span class="step-icon">8</span> <span class="step-name">IVD to Axial Projection Tool</span><span class="active-dots"></span></div>
+                    <div class="pipeline-step" id="step_09"><span class="step-icon">9</span> <span class="step-name">Axial ROI Detection Tool</span><span class="active-dots"></span></div>
+                    <div class="pipeline-step" id="step_10"><span class="step-icon">10</span> <span class="step-name">Axial ROI Estimation Tool</span><span class="active-dots"></span></div>
+                    <div class="pipeline-step" id="step_11"><span class="step-icon">11</span> <span class="step-name">Axial Foraminal Classification Tool</span><span class="active-dots"></span></div>
+                    <div class="pipeline-step" id="step_12"><span class="step-icon">12</span> <span class="step-name">Axial Lateral Classification Tool</span><span class="active-dots"></span></div>
+                    <div class="pipeline-step" id="step_13"><span class="step-icon">13</span> <span class="step-name">Axial Central Classification Tool</span><span class="active-dots"></span></div>
+                </div>
+                <div id="expertAgentsStatus" style="display: none; margin-top: 1rem; padding: 0.75rem; border-radius: 6px; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); font-size: 0.8rem; color: #60a5fa; align-items: center; gap: 0.5rem; animation: fadeIn 0.4s ease;">
+                    <span class="active-dots" style="font-weight: 600;">Now a panel of Expert Agents is working one by one</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Chat Box -->
+        <!-- Right Column: Chat & Visualizer Tabs -->
+        <div class="chat-panel">
+            <div class="tab-header" style="display: flex; background: var(--header-bg); border-bottom: 1px solid var(--border-color); padding: 0.25rem 0.5rem; gap: 0.25rem; align-items: center;">
+                <button class="tab-btn active" id="tabChat" onclick="switchTab('chat')" style="flex: 1; background: transparent; color: var(--text-primary); border: none; padding: 0.75rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; border-radius: 6px; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    Patient Portal Chat
+                </button>
+                <button class="tab-btn" id="tabBoard" onclick="switchTab('board')" style="flex: 1; background: transparent; color: var(--text-secondary); border: none; padding: 0.75rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; border-radius: 6px; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+                    Specialist Debate Board (Graph)
+                </button>
+                <button class="tab-btn" id="tabReport" onclick="switchTab('report')" style="flex: 1; background: transparent; color: var(--text-secondary); border: none; padding: 0.75rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; border-radius: 6px; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    Consensus Report
+                </button>
+                <button id="themeToggleBtn" onclick="toggleTheme()" style="background: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); padding: 0.5rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; margin-left: auto; width: 34px; height: 34px;">
+                    <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
+            </div>
+
+            <!-- Tab 1: Chat Content -->
+            <div id="chatContent" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+                <div class="chat-header">
+                    <h2>SpineSwarm Patient & Clinician Assistant</h2>
+                    <div style="font-size: 0.75rem; color: var(--accent-teal); display: flex; align-items: center; gap: 0.35rem;">
+                        <span style="width: 8px; height: 8px; background: var(--accent-green); border-radius: 50%;"></span>
+                        Consensus Moderator Online
+                    </div>
+                </div>
+                
+                <div class="chat-history" id="chatHistory" style="flex: 1;">
+                    <div class="chat-bubble agent">
+                        <div class="bubble-header agent">SpineSwarm Expert Panel</div>
+                        <p>Welcome to the SpineSwarm medical diagnostic workspace.</p>
+                        <p>Please upload your patient's <strong>DICOM ZIP or results.json</strong> file in the left panel and click <strong>"Run SpineSwarm Analysis"</strong> to initiate the clinical diagnostic debate and generate the consensus report.</p>
+                    </div>
+                </div>
+
+                <!-- Typing indicator -->
+                <div class="typing-indicator" id="typingIndicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+
+                <!-- Quick queries chips -->
+                <div class="quick-questions" id="quickQuestions" style="display: none;">
+                    <span class="chip" onclick="askQuickQuestion('What stenosis is present?')">What stenosis is present?</span>
+                    <span class="chip" onclick="askQuickQuestion('Why is the L4-L5 stenosis occurring?')">Why is this happening?</span>
+                    <span class="chip" onclick="askQuickQuestion('Where would the patient feel pain from this L4-L5 compression?')">Where would I feel pain?</span>
+                </div>
+
+                <div class="chat-input-area">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Ask the expert panel a question..." disabled onkeypress="handleKeyPress(event)">
+                    <button class="send-btn" id="sendBtn" onclick="sendUserMessage()" disabled>Send</button>
+                </div>
+            </div>
+
+            <!-- Tab 2: Specialist Debate Board Graph Content -->
+            <div id="boardContent" style="display: none; flex: 1; flex-direction: column; overflow: hidden; position: relative; background: var(--board-bg);">
+                <div class="chat-header">
+                    <h2>Live Panel Debate Graph</h2>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">Click any node to inspect panel inputs/decisions</span>
+                </div>
+                
+                <!-- SVG Canvas and absolute node elements container -->
+                <div id="graphContainer" style="flex: 1; position: relative; overflow: hidden; padding: 1.5rem; background: var(--graph-bg);">
+                    <!-- SVG backdrop for drawing lines/connections -->
+                    <svg id="svgBackdrop" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;">
+                        <!-- Defs for markers or glow filters -->
+                        <defs>
+                            <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.6" />
+                                <stop offset="100%" stop-color="#14b8a6" stop-opacity="0.6" />
+                            </linearGradient>
+                            <filter id="glowFilter" x="-20%" y="-20%" width="140%" height="140%">
+                                <feGaussianBlur stdDeviation="4" result="blur" />
+                                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                            </filter>
+                        </defs>
+                    </svg>
+
+                    <!-- Absolute Nodes Layout -->
+                    <!-- Row 1: Input Data Source -->
+                    <div class="graph-node-element" id="node_input" onclick="inspectNode('input')" style="position: absolute; top: 45%; left: 8%; transform: translateY(-50%); width: 160px; background: var(--node-bg); border: 2.5px solid var(--accent-blue); padding: 0.75rem; border-radius: 10px; cursor: pointer; text-align: center; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25); z-index: 2; transition: all 0.3s ease;">
+                        <div style="font-size: 0.65rem; color: var(--accent-blue); font-weight: 700; text-transform: uppercase; margin-bottom: 0.2rem;">Data Source</div>
+                        <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-primary);">Patient DICOM & Symptoms</div>
+                    </div>
+
+                    <!-- Row 2: Specialists Column -->
+                    <div class="graph-node-element" id="node_orthopedic" onclick="inspectNode('orthopedic')" style="position: absolute; top: 10%; left: 45%; transform: translateX(-50%); width: 180px; background: var(--node-bg); border: 1.5px solid var(--border-color); padding: 0.75rem; border-radius: 10px; cursor: pointer; text-align: center; z-index: 2; transition: all 0.3s ease;">
+                        <div style="font-size: 0.65rem; color: var(--accent-orange); font-weight: 700; text-transform: uppercase; margin-bottom: 0.2rem;">Biomechanical</div>
+                        <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-primary);">Biomechanical Agent</div>
+                    </div>
+
+                    <div class="graph-node-element" id="node_neuroradiologist" onclick="inspectNode('neuroradiologist')" style="position: absolute; top: 35%; left: 45%; transform: translateX(-50%); width: 180px; background: var(--node-bg); border: 1.5px solid var(--border-color); padding: 0.75rem; border-radius: 10px; cursor: pointer; text-align: center; z-index: 2; transition: all 0.3s ease;">
+                        <div style="font-size: 0.65rem; color: var(--accent-teal); font-weight: 700; text-transform: uppercase; margin-bottom: 0.2rem;">Neuroradiology</div>
+                        <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-primary);">Neural Agent</div>
+                    </div>
+
+                    <div class="graph-node-element" id="node_neurosurgeon" onclick="inspectNode('neurosurgeon')" style="position: absolute; top: 60%; left: 45%; transform: translateX(-50%); width: 180px; background: var(--node-bg); border: 1.5px solid var(--border-color); padding: 0.75rem; border-radius: 10px; cursor: pointer; text-align: center; z-index: 2; transition: all 0.3s ease;">
+                        <div style="font-size: 0.65rem; color: #ec4899; font-weight: 700; text-transform: uppercase; margin-bottom: 0.2rem;">Neurosurgery</div>
+                        <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-primary);">Surgical Agent</div>
+                    </div>
+
+                    <div class="graph-node-element" id="node_search" onclick="inspectNode('search')" style="position: absolute; top: 85%; left: 45%; transform: translateX(-50%); width: 180px; background: var(--node-bg); border: 1.5px solid var(--border-color); padding: 0.75rem; border-radius: 10px; cursor: pointer; text-align: center; z-index: 2; transition: all 0.3s ease;">
+                        <div style="font-size: 0.65rem; color: #a855f7; font-weight: 700; text-transform: uppercase; margin-bottom: 0.2rem;">Literature Search</div>
+                        <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-primary);">Medical Search Agent</div>
+                    </div>
+
+                    <!-- Row 3: Consensus Moderator -->
+                    <div class="graph-node-element" id="node_moderator" onclick="inspectNode('moderator')" style="position: absolute; top: 45%; right: 8%; transform: translateY(-50%); width: 160px; background: var(--node-bg); border: 2.5px solid var(--accent-green); padding: 0.75rem; border-radius: 10px; cursor: pointer; text-align: center; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25); z-index: 2; transition: all 0.3s ease;">
+                        <div style="font-size: 0.65rem; color: var(--accent-green); font-weight: 700; text-transform: uppercase; margin-bottom: 0.2rem;">Consensus Board</div>
+                        <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-primary);">Consensus Moderator</div>
+                    </div>
+                </div>
+
+                <!-- Specialist Detail Inspector Panel overlay inside the tab -->
+                <div id="nodeInspector" style="position: absolute; bottom: 0; left: 0; right: 0; background: var(--card-bg); border-top: 2px solid var(--border-color); padding: 1.25rem; display: none; flex-direction: column; gap: 0.75rem; max-height: 50%; overflow-y: auto; z-index: 10; box-shadow: 0 -10px 25px var(--shadow-color); backdrop-filter: blur(8px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                        <div>
+                            <h3 id="inspectorTitle" style="font-size: 1rem; color: var(--text-primary); font-weight: 600;">Biomechanical Specialist Agent</h3>
+                            <span id="inspectorRole" style="font-size: 0.7rem; color: var(--text-secondary);">Spine Alignment & Biomechanics</span>
+                        </div>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" style="cursor: pointer;" onclick="closeInspector()"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <span style="font-size: 0.7rem; color: var(--accent-blue); font-weight: 700; text-transform: uppercase;">Input Context Received</span>
+                            <pre id="inspectorInput" style="white-space: pre-wrap; word-break: break-word; font-family: monospace; font-size: 0.75rem; margin-top: 0.35rem; color: var(--text-secondary); background: var(--input-bg); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); max-height: 180px; overflow-y: auto;"></pre>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.7rem; color: var(--accent-green); font-weight: 700; text-transform: uppercase;">Decision / Output Produced</span>
+                            <div id="inspectorOutput" style="font-size: 0.75rem; margin-top: 0.35rem; color: var(--text-primary); background: var(--input-bg); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); max-height: 180px; overflow-y: auto; line-height: 1.4;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Consensus Report Markdown Content -->
+            <div id="reportContent" style="display: none; flex: 1; flex-direction: column; overflow: hidden; background: var(--chat-history-bg);">
+                <div class="chat-header">
+                    <h2>Consensus Diagnostic Report</h2>
+                    <button class="chip" onclick="copyReport()" style="border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(59, 130, 246, 0.1); color: var(--heading-accent); cursor: pointer; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 600;">Copy Markdown</button>
+                </div>
+                <div id="rawReportContainer" style="flex: 1; padding: 1.5rem; overflow-y: auto; font-size: 0.85rem; line-height: 1.6; color: var(--text-primary);">
+                    <div style="text-align: center; color: var(--text-secondary); padding-top: 3rem;">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 0.75rem; opacity: 0.5;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <p>No report generated yet. Upload the JSON tools output file and run the analysis.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const uploadZone = document.getElementById("uploadZone");
+        const fileInput = document.getElementById("fileInput");
+        const fileInfo = document.getElementById("fileInfo");
+        const fileName = document.getElementById("fileName");
+        const chatHistory = document.getElementById("chatHistory");
+        const chatInput = document.getElementById("chatInput");
+        const sendBtn = document.getElementById("sendBtn");
+        const quickQuestions = document.getElementById("quickQuestions");
+        const typingIndicator = document.getElementById("typingIndicator");
+        const modelSelect = document.getElementById("modelSelect");
+        const apiKeyInput = document.getElementById("apiKeyInput");
+        const apiKeyContainer = document.getElementById("apiKeyContainer");
+
+        // Show/hide API Key input dynamically when model selection changes
+        modelSelect.addEventListener("change", () => {
+            const isChatGPT = modelSelect.value.startsWith("gpt-");
+            apiKeyContainer.style.display = isChatGPT ? "block" : "none";
+        });
+
+        let uploadedFileContent = null;
+        let uploadedFileName = "";
+        let chatMessages = [];
+        let currentDebateNodes = [];
+        let activeTab = 'chat';
+        let activeInspectedNodeId = null;
+        let currentReportMarkdown = "";
+
+        // File Uploader listeners
+        uploadZone.addEventListener("click", () => fileInput.click());
+        
+        uploadZone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            uploadZone.classList.add("dragover");
+        });
+
+        uploadZone.addEventListener("dragleave", () => {
+            uploadZone.classList.remove("dragover");
+        });
+
+        uploadZone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove("dragover");
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener("change", (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            uploadedFileContent = null;
+            uploadedFileName = file.name;
+            fileName.textContent = file.name + " (Loading...)";
+            fileInfo.style.display = "flex";
+            uploadZone.style.display = "none";
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                uploadedFileContent = e.target.result;
+                fileName.textContent = file.name;
+            };
+            reader.onerror = function (e) {
+                alert("Error reading file: " + reader.error);
+                resetFile();
+            };
+
+            if (file.name.toLowerCase().endsWith(".zip")) {
+                reader.readAsDataURL(file);
+            } else {
+                reader.readAsText(file);
+            }
+        }
+
+        function resetFile() {
+            uploadedFileContent = null;
+            uploadedFileName = "";
+            fileInfo.style.display = "none";
+            uploadZone.style.display = "block";
+            fileInput.value = "";
+            currentDebateNodes = [];
+            closeInspector();
+            resetPipelineMonitor();
+            resetGraphVisuals();
+            document.getElementById("expertAgentsStatus").style.display = "none";
+            document.getElementById("rawReportContainer").innerHTML = `
+                <div style="text-align: center; color: var(--text-secondary); padding-top: 3rem;">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 0.75rem; opacity: 0.5;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <p>No report generated yet. Upload the JSON tools output file and run the analysis.</p>
+                </div>
+            `;
+        }
+
+        function resetPipelineMonitor() {
+            for (let i = 1; i <= 13; i++) {
+                const step = document.getElementById("step_" + (i < 10 ? "0" + i : i));
+                step.classList.remove("active", "completed");
+            }
+            const statusBanner = document.getElementById("expertAgentsStatus");
+            statusBanner.style.display = "none";
+            statusBanner.style.background = "rgba(59, 130, 246, 0.08)";
+            statusBanner.style.borderColor = "rgba(59, 130, 246, 0.2)";
+            statusBanner.style.color = "#60a5fa";
+            const statusSpan = statusBanner.querySelector("span");
+            statusSpan.className = "active-dots";
+            statusSpan.textContent = "Now a panel of Expert Agents is working one by one";
+        }
+
+        function resetGraphVisuals() {
+            const nodes = ["input", "orthopedic", "neuroradiologist", "neurosurgeon", "search", "moderator"];
+            nodes.forEach(id => {
+                const el = document.getElementById("node_" + id);
+                if (el) {
+                    el.style.borderColor = "var(--node-idle-border)";
+                    el.style.boxShadow = "0 4px 12px var(--shadow-color)";
+                }
+            });
+            const backdrop = document.getElementById("svgBackdrop");
+            const paths = backdrop.querySelectorAll("path");
+            paths.forEach(p => p.remove());
+        }
+
+        // ---- Markdown rendering -------------------------------------------------
+        // The report is authored as Markdown by the Consensus Moderator, so it must
+        // be rendered rather than shown raw. LLMs also emit backslash-escaped
+        // punctuation (e.g. "Severe\_Stenosis"), which is unescaped here.
+
+        const ESC_SENTINEL = String.fromCharCode(1);
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+        }
+
+        // Park backslash-escaped Markdown punctuation so it survives inline parsing
+        function protectEscapes(str) {
+            return str.replace(/\\([\\`*_{}\[\]()#+\-.!])/g,
+                (m, ch) => ESC_SENTINEL + ch.charCodeAt(0) + ESC_SENTINEL);
+        }
+
+        function restoreEscapes(str) {
+            return str.replace(new RegExp(ESC_SENTINEL + "(\\d+)" + ESC_SENTINEL, "g"),
+                (m, code) => String.fromCharCode(Number(code)));
+        }
+
+        // Inline formatting for a single line of text (already block-classified)
+        function renderInline(text) {
+            let s = protectEscapes(escapeHtml(text));
+            s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+            s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            // Single-asterisk emphasis. Underscores are left alone on purpose:
+            // clinical labels such as Severe_Stenosis are not italics.
+            s = s.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+            s = s.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,
+                '<a href="$2" target="_blank" rel="noopener">$1</a>');
+            return s;
+        }
+
+        function severityClass(text) {
+            const t = text.toLowerCase();
+            if (t.includes("severe")) return "sev-severe";
+            if (t.includes("moderate") || t.includes("mild")) return "sev-moderate";
+            return "";
+        }
+
+        function renderTable(rows) {
+            const parsed = rows
+                .map(r => r.replace(/^\||\|$/g, "").split("|").map(c => c.trim()))
+                .filter(cells => !cells.every(c => /^:?-+:?$/.test(c)));
+            if (!parsed.length) return "";
+
+            let out = '<div class="md-table-wrap"><table class="md-table"><thead><tr>';
+            parsed[0].forEach(c => { out += '<th>' + renderInline(c) + '</th>'; });
+            out += '</tr></thead><tbody>';
+            parsed.slice(1).forEach(cells => {
+                out += '<tr>';
+                cells.forEach(c => {
+                    // Strip emphasis markers before grading so **Severe** matches too
+                    const plain = restoreEscapes(c.replace(/\*/g, "")).trim();
+                    const cls = severityClass(plain);
+                    out += '<td' + (cls ? ' class="' + cls + '"' : '') + '>'
+                        + renderInline(plain) + '</td>';
+                });
+                out += '</tr>';
+            });
+            return out + '</tbody></table></div>';
+        }
+
+        // Diagnostic images live behind the prediction API's ngrok tunnel, which
+        // serves browsers an interstitial page instead of the file. Route remote
+        // images through the local proxy, which fetches them with the skip header.
+        function imageSrc(url) {
+            if (/^https?:\/\//i.test(url) && url.indexOf(window.location.origin) !== 0) {
+                return "/api/image?src=" + encodeURIComponent(url);
+            }
+            return url;
+        }
+
+        function renderImage(alt, url) {
+            return '<figure class="md-figure"><img src="' + escapeHtml(imageSrc(url))
+                + '" alt="' + escapeHtml(alt) + '" loading="lazy"'
+                + ' onerror="this.closest(\'figure\').classList.add(\'md-figure-error\')">'
+                + '<figcaption>' + escapeHtml(alt) + '</figcaption></figure>';
+        }
+
+        function parseMarkdown(text) {
+            if (!text) return "";
+            const lines = String(text).replace(/\r\n/g, "\n").split("\n");
+            const out = [];
+            let listItems = [];
+
+            const flushList = () => {
+                if (listItems.length) {
+                    out.push('<ul>' + listItems.map(li => '<li>' + li + '</li>').join('') + '</ul>');
+                    listItems = [];
+                }
+            };
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+
+                if (!line) { flushList(); continue; }
+
+                // Table block: consume every consecutive pipe row
+                if (line.startsWith('|') && line.endsWith('|')) {
+                    flushList();
+                    const block = [];
+                    while (i < lines.length) {
+                        const t = lines[i].trim();
+                        if (!t.startsWith('|') || !t.endsWith('|')) break;
+                        block.push(t);
+                        i++;
+                    }
+                    i--;
+                    out.push(renderTable(block));
+                    continue;
+                }
+
+                // Standalone image
+                const img = line.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+                if (img) { flushList(); out.push(renderImage(img[1], img[2])); continue; }
+
+                // ATX headings
+                const atx = line.match(/^(#{1,4})\s+(.*)$/);
+                if (atx) {
+                    flushList();
+                    const level = Math.min(atx[1].length + 1, 5);
+                    out.push('<h' + level + '>' + renderInline(atx[2]) + '</h' + level + '>');
+                    continue;
+                }
+
+                // Numbered report sections, e.g. "1. Executive Summary:"
+                if (/^\d+\.\s+[^.]{2,60}:\s*$/.test(line)) {
+                    flushList();
+                    out.push('<h3 class="md-section">'
+                        + renderInline(line.replace(/:\s*$/, '')) + '</h3>');
+                    continue;
+                }
+
+                // Emphasised standalone label, e.g. "*Vertebrae Analysis:*"
+                const sub = line.match(/^\*([^*]+)\*$/);
+                if (sub) {
+                    flushList();
+                    out.push('<h4 class="md-sub">'
+                        + renderInline(sub[1].replace(/:\s*$/, '')) + '</h4>');
+                    continue;
+                }
+
+                // Bullets ("- item" or "* item")
+                const bullet = line.match(/^[-*]\s+(.*)$/);
+                if (bullet) { listItems.push(renderInline(bullet[1])); continue; }
+
+                flushList();
+                let para = renderInline(line);
+                // Inline images that share a line with text
+                para = para.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g,
+                    (m, alt, url) => renderImage(alt, url));
+                out.push('<p>' + para + '</p>');
+            }
+            flushList();
+
+            return restoreEscapes(out.join('\n'));
+        }
+
+        function appendMessage(role, content, senderName) {
+            const bubble = document.createElement("div");
+            bubble.classList.add("chat-bubble", role);
+            
+            const header = document.createElement("div");
+            header.classList.add("bubble-header", role);
+            header.textContent = senderName;
+            
+            const textDiv = document.createElement("div");
+            textDiv.className = "md-body";
+            textDiv.innerHTML = parseMarkdown(content);
+            
+            bubble.appendChild(header);
+            bubble.appendChild(textDiv);
+            chatHistory.appendChild(bubble);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+
+            chatMessages.push({ role: role === "user" ? "user" : "assistant", content: content });
+        }
+
+        function showTyping(show) {
+            typingIndicator.style.display = show ? "flex" : "none";
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        // Tabs Controller
+        function switchTab(tabId) {
+            activeTab = tabId;
+            document.getElementById("chatContent").style.display = "none";
+            document.getElementById("boardContent").style.display = "none";
+            document.getElementById("reportContent").style.display = "none";
+            document.getElementById("tabChat").classList.remove("active");
+            document.getElementById("tabBoard").classList.remove("active");
+            document.getElementById("tabReport").classList.remove("active");
+            
+            if (tabId === 'chat') {
+                document.getElementById("chatContent").style.display = "flex";
+                document.getElementById("tabChat").classList.add("active");
+            } else if (tabId === 'board') {
+                document.getElementById("boardContent").style.display = "flex";
+                document.getElementById("tabBoard").classList.add("active");
+                setTimeout(drawGraphConnections, 100);
+            } else if (tabId === 'report') {
+                document.getElementById("reportContent").style.display = "flex";
+                document.getElementById("tabReport").classList.add("active");
+            }
+        }
+
+        // SVG Node Connections Drawer
+        function drawGraphConnections() {
+            const container = document.getElementById("graphContainer");
+            const svg = document.getElementById("svgBackdrop");
+            if (!container || !svg || activeTab !== 'board') return;
+
+            // Clear old paths
+            const paths = svg.querySelectorAll("path");
+            paths.forEach(p => p.remove());
+
+            const nodes = ["orthopedic", "neuroradiologist", "neurosurgeon", "search"];
+            const inputNode = document.getElementById("node_input");
+            const modNode = document.getElementById("node_moderator");
+
+            if (!inputNode || !modNode) return;
+
+            const rectContainer = container.getBoundingClientRect();
+            const rectInput = inputNode.getBoundingClientRect();
+            const rectMod = modNode.getBoundingClientRect();
+
+            // Right center of input node
+            const inputX = rectInput.right - rectContainer.left;
+            const inputY = rectInput.top + rectInput.height / 2 - rectContainer.top;
+
+            // Left center of moderator node
+            const modX = rectMod.left - rectContainer.left;
+            const modY = rectMod.top + rectMod.height / 2 - rectContainer.top;
+
+            const hasPulse = document.querySelectorAll(".pulse-path").length > 0 || typingIndicator.style.display === "flex";
+
+            nodes.forEach(nodeId => {
+                const nodeEl = document.getElementById("node_" + nodeId);
+                if (!nodeEl) return;
+
+                const rectNode = nodeEl.getBoundingClientRect();
+                const nodeLeftX = rectNode.left - rectContainer.left;
+                const nodeRightX = rectNode.right - rectContainer.left;
+                const nodeY = rectNode.top + rectNode.height / 2 - rectContainer.top;
+
+                // Connection 1: Input -> Specialist
+                const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                const cp1X = inputX + (nodeLeftX - inputX) / 2;
+                const d1 = `M ${inputX} ${inputY} C ${cp1X} ${inputY}, ${cp1X} ${nodeY}, ${nodeLeftX} ${nodeY}`;
+                path1.setAttribute("d", d1);
+                path1.setAttribute("stroke", "rgba(59, 130, 246, 0.2)");
+                path1.setAttribute("stroke-width", "2");
+                path1.setAttribute("fill", "none");
+                path1.setAttribute("class", "graph-connection" + (hasPulse ? " pulse-path" : ""));
+                path1.setAttribute("id", `edge_in_${nodeId}`);
+                svg.appendChild(path1);
+
+                // Connection 2: Specialist -> Moderator
+                const path2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                const cp2X = nodeRightX + (modX - nodeRightX) / 2;
+                const d2 = `M ${nodeRightX} ${nodeY} C ${cp2X} ${nodeY}, ${cp2X} ${modY}, ${modX} ${modY}`;
+                path2.setAttribute("d", d2);
+                path2.setAttribute("stroke", "rgba(16, 185, 129, 0.2)");
+                path2.setAttribute("stroke-width", "2");
+                path2.setAttribute("fill", "none");
+                path2.setAttribute("class", "graph-connection" + (hasPulse ? " pulse-path" : ""));
+                path2.setAttribute("id", `edge_out_${nodeId}`);
+                svg.appendChild(path2);
+            });
+        }
+
+        window.addEventListener("resize", drawGraphConnections);
+
+        // Path Pulsing
+        function startGraphPulse() {
+            const paths = document.querySelectorAll(".graph-connection");
+            paths.forEach(p => p.classList.add("pulse-path"));
+        }
+
+        function stopGraphPulse() {
+            const paths = document.querySelectorAll(".graph-connection");
+            paths.forEach(p => p.classList.remove("pulse-path"));
+        }
+
+        // Inspector Visual Updates
+        function updateGraphVisuals() {
+            if (!currentDebateNodes || currentDebateNodes.length === 0) return;
+
+            currentDebateNodes.forEach(node => {
+                const element = document.getElementById("node_" + node.id);
+                if (element) {
+                    element.style.borderColor = getBorderColorForNode(node.id, true);
+                    element.style.boxShadow = `0 0 15px ${getGlowColorForNode(node.id, 0.25)}`;
+                }
+            });
+            
+            if (activeInspectedNodeId) {
+                inspectNode(activeInspectedNodeId);
+            }
+        }
+
+        function getBorderColorForNode(id, active) {
+            if (!active) return "var(--node-idle-border)";
+            switch(id) {
+                case "input": return "var(--accent-blue)";
+                case "orthopedic": return "var(--accent-orange)";
+                case "neuroradiologist": return "var(--accent-teal)";
+                case "neurosurgeon": return "#ec4899";
+                case "search": return "#a855f7";
+                case "moderator": return "var(--accent-green)";
+                default: return "var(--node-idle-border)";
+            }
+        }
+
+        function getGlowColorForNode(id, opacity) {
+            switch(id) {
+                case "input": return `rgba(59, 130, 246, ${opacity})`;
+                case "orthopedic": return `rgba(249, 115, 22, ${opacity})`;
+                case "neuroradiologist": return `rgba(20, 184, 166, ${opacity})`;
+                case "neurosurgeon": return `rgba(236, 72, 153, ${opacity})`;
+                case "search": return `rgba(168, 85, 247, ${opacity})`;
+                case "moderator": return `rgba(16, 185, 129, ${opacity})`;
+                default: return `rgba(59, 130, 246, ${opacity})`;
+            }
+        }
+
+        function inspectNode(nodeId) {
+            activeInspectedNodeId = nodeId;
+            const node = currentDebateNodes.find(n => n.id === nodeId);
+            if (!node) return;
+
+            document.getElementById("inspectorTitle").textContent = node.name;
+            document.getElementById("inspectorRole").textContent = node.role;
+            document.getElementById("inspectorInput").textContent = node.input;
+            document.getElementById("inspectorOutput").innerHTML =
+                '<div class="md-body">' + parseMarkdown(node.output) + '</div>';
+
+            const inspector = document.getElementById("nodeInspector");
+            inspector.style.display = "flex";
+
+            // Magnify current node, dim others
+            const allNodes = document.querySelectorAll(".graph-node-element");
+            allNodes.forEach(el => {
+                if (el.id === "node_" + nodeId) {
+                    el.style.opacity = "1";
+                    el.style.scale = "1.06";
+                } else {
+                    el.style.opacity = "0.65";
+                    el.style.scale = "0.95";
+                }
+            });
+        }
+
+        function closeInspector() {
+            activeInspectedNodeId = null;
+            document.getElementById("nodeInspector").style.display = "none";
+            const allNodes = document.querySelectorAll(".graph-node-element");
+            allNodes.forEach(el => {
+                el.style.opacity = "1";
+                el.style.scale = "1";
+            });
+        }
+
+        function copyReport() {
+            const reportText = currentReportMarkdown
+                || document.getElementById("rawReportContainer").innerText;
+            navigator.clipboard.writeText(reportText).then(() => {
+                alert("Consensus Report copied to clipboard!");
+            }).catch(err => {
+                alert("Failed to copy: " + err);
+            });
+        }
+
+        // API execution wrappers
+        async function runSpineSwarm() {
+            if (!uploadedFileContent) {
+                alert("Please upload a JSON outputs or ZIP scan file first.");
+                return;
+            }
+
+            resetPipelineMonitor();
+            resetGraphVisuals();
+            document.getElementById("analyzeBtn").disabled = true;
+            appendMessage("user", "Initiated SpineSwarm clinical tools and analysis.", "User");
+            showTyping(true);
+            startGraphPulse();
+
+            // Simulate Pipeline Step-by-Step progress
+            for (let i = 1; i <= 13; i++) {
+                const stepId = "step_" + (i < 10 ? "0" + i : i);
+                const step = document.getElementById(stepId);
+                step.classList.add("active");
+                await new Promise(r => setTimeout(r, 400));
+                step.classList.remove("active");
+                step.classList.add("completed");
+            }
+
+            document.getElementById("expertAgentsStatus").style.display = "flex";
+
+            const symptoms = document.getElementById("symptomsInput").value;
+
+            try {
+                const response = await fetch("/api/upload", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        filename: uploadedFileName,
+                        filecontent: uploadedFileContent,
+                        symptoms: symptoms,
+                        model: modelSelect.value,
+                        api_key: apiKeyInput.value.trim()
+                    })
+                });
+
+                const data = await response.json();
+                showTyping(false);
+                stopGraphPulse();
+                document.getElementById("analyzeBtn").disabled = false;
+
+                if (data.error) {
+                    appendMessage("agent", "Error running Swarm: " + data.error, "SpineSwarm Moderator");
+                    document.getElementById("expertAgentsStatus").style.display = "none";
+                } else {
+                    // Show concise notification instead of complete report in chat bubble
+                    appendMessage("agent", "Analysis completed successfully. The clinical consensus report is available in the **Consensus Report** tab. You can now ask the SpineSwarm panel any questions.", "SpineSwarm Expert Panel");
+                    
+                    const statusBanner = document.getElementById("expertAgentsStatus");
+                    statusBanner.style.background = "rgba(16, 185, 129, 0.08)";
+                    statusBanner.style.borderColor = "rgba(16, 185, 129, 0.2)";
+                    statusBanner.style.color = "#10b981";
+                    const statusSpan = statusBanner.querySelector("span");
+                    statusSpan.classList.remove("active-dots");
+                    statusSpan.textContent = "Expert panel debate complete. Consensus report compiled.";
+
+                    // Save debate nodes
+                    currentDebateNodes = data.debate_nodes || [];
+                    updateGraphVisuals();
+
+                    // Render report markdown content tab
+                    currentReportMarkdown = data.report || "";
+                    document.getElementById("rawReportContainer").innerHTML =
+                        '<div class="md-body">' + parseMarkdown(data.report) + '</div>';
+                    
+                    // Enable chat inputs
+                    chatInput.disabled = false;
+                    sendBtn.disabled = false;
+                    quickQuestions.style.display = "flex";
+                }
+            } catch (e) {
+                showTyping(false);
+                stopGraphPulse();
+                document.getElementById("analyzeBtn").disabled = false;
+                appendMessage("agent", "Failed to connect to SpineSwarm server: " + e, "SpineSwarm Moderator");
+                document.getElementById("expertAgentsStatus").style.display = "none";
+            }
+        }
+
+        async function sendUserMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            chatInput.value = "";
+            appendMessage("user", text, "User");
+            showTyping(true);
+            startGraphPulse();
+
+            const symptoms = document.getElementById("symptomsInput").value;
+
+            try {
+                const response = await fetch("/api/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        message: text,
+                        history: chatMessages,
+                        symptoms: symptoms,
+                        model: modelSelect.value,
+                        api_key: apiKeyInput.value.trim()
+                    })
+                });
+
+                const data = await response.json();
+                showTyping(false);
+                stopGraphPulse();
+
+                if (data.error) {
+                    appendMessage("agent", "Error: " + data.error, "SpineSwarm Moderator");
+                } else {
+                    appendMessage("agent", data.reply, "SpineSwarm Expert Panel");
+                    
+                    // Update graph visualization nodes
+                    if (data.debate_nodes) {
+                        currentDebateNodes = data.debate_nodes;
+                        updateGraphVisuals();
+                    }
+                }
+            } catch (e) {
+                showTyping(false);
+                stopGraphPulse();
+                appendMessage("agent", "Failed to communicate with SpineSwarm moderator: " + e, "SpineSwarm Moderator");
+            }
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === "Enter") {
+                sendUserMessage();
+            }
+        }
+
+        function askQuickQuestion(text) {
+            chatInput.value = text;
+            sendUserMessage();
+        }
+
+        const SUN_ICON = '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>';
+        const MOON_ICON = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+
+        function applyTheme(theme) {
+            if (theme === "light") {
+                document.documentElement.setAttribute("data-theme", "light");
+            } else {
+                document.documentElement.removeAttribute("data-theme");
+            }
+            const icon = document.getElementById("themeIcon");
+            if (icon) icon.innerHTML = theme === "light" ? SUN_ICON : MOON_ICON;
+        }
+
+        function toggleTheme() {
+            const isLight = document.documentElement.getAttribute("data-theme") === "light";
+            const newTheme = isLight ? "dark" : "light";
+            applyTheme(newTheme);
+            try {
+                localStorage.setItem("spineswarm-theme", newTheme);
+            } catch (e) {
+                /* storage unavailable (private window) - theme still applies for this session */
+            }
+        }
+
+        // Restore the saved theme, otherwise follow the OS preference
+        (function initTheme() {
+            let saved = null;
+            try {
+                saved = localStorage.getItem("spineswarm-theme");
+            } catch (e) { /* ignore */ }
+            if (!saved) {
+                const prefersLight = window.matchMedia
+                    && window.matchMedia("(prefers-color-scheme: light)").matches;
+                saved = prefersLight ? "light" : "dark";
+            }
+            applyTheme(saved);
+        })();
+
+        async function loadModels() {
+            try {
+                const response = await fetch("/api/models");
+                const data = await response.json();
+                modelSelect.innerHTML = "";
+                data.models.forEach(model => {
+                    const opt = document.createElement("option");
+                    opt.value = model.id;
+                    opt.textContent = model.name;
+                    modelSelect.appendChild(opt);
+                });
+                if (data.default_model) modelSelect.value = data.default_model;
+                // Check initial selection
+                const isChatGPT = modelSelect.value.startsWith("gpt-");
+                apiKeyContainer.style.display = isChatGPT ? "block" : "none";
+            } catch (e) {
+                console.error("Failed to load models list:", e);
+                // Fallback option
+                modelSelect.innerHTML = '<option value="gemma3:12b">Ollama: gemma3:12b (unverified)</option>';
+                apiKeyContainer.style.display = "none";
+            }
+        }
+
+        // Initialize models dropdown on load
+        loadModels();
+    </script>
+</body>
+</html>

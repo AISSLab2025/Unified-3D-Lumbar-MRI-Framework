@@ -1,0 +1,5 @@
+requests>=2.31,<3
+langchain-core>=0.2,<2
+langchain-openai>=0.1,<2
+langchain-ollama>=0.1,<2
+langchain-classic>=1,<2
